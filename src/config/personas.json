@@ -1,0 +1,87 @@
+{
+  "personaCards": {
+    "health": [
+      { "cardId": "aqi", "weight": 40 },
+      { "cardId": "uvIndex", "weight": 30 },
+      { "cardId": "pollen", "weight": 25 },
+      { "cardId": "humidity", "weight": 20 }
+    ],
+    "fitness": [
+      { "cardId": "bestRunningHours", "weight": 45 },
+      { "cardId": "uvIndex", "weight": 25 },
+      { "cardId": "wind", "weight": 20 },
+      { "cardId": "sunrise", "weight": 15 }
+    ],
+    "beach": [
+      { "cardId": "marine", "weight": 50 },
+      { "cardId": "uvIndex", "weight": 25 },
+      { "cardId": "wind", "weight": 20 }
+    ],
+    "travel": [
+      { "cardId": "travelAlerts", "weight": 45 },
+      { "cardId": "packingSuggestion", "weight": 30 },
+      { "cardId": "wind", "weight": 15 }
+    ],
+    "family": [
+      { "cardId": "commuteRisk", "weight": 40 },
+      { "cardId": "rainAlert", "weight": 35 },
+      { "cardId": "uvIndex", "weight": 15 }
+    ],
+    "agri": [
+      { "cardId": "soilMoisture", "weight": 50 },
+      { "cardId": "rainAlert", "weight": 35 },
+      { "cardId": "frostAlert", "weight": 40 }
+    ],
+    "commute": [
+      { "cardId": "commuteRisk", "weight": 45 },
+      { "cardId": "visibility", "weight": 40 },
+      { "cardId": "rainAlert", "weight": 30 }
+    ],
+    "events": [
+      { "cardId": "comfortIndex", "weight": 40 },
+      { "cardId": "rainAlert", "weight": 35 },
+      { "cardId": "wind", "weight": 20 }
+    ]
+  },
+  "dangerThresholds": {
+    "aqi": { "value": 150, "operator": "gt", "boost": 50 },
+    "uvIndex": { "value": 8, "operator": "gte", "boost": 50 },
+    "temperature": { "value": 40, "operator": "gte", "boost": 50 },
+    "rainProbability": { "value": 70, "operator": "gte", "boost": 50 },
+    "waveHeight": { "value": 2.5, "operator": "gte", "boost": 50 },
+    "visibility": { "value": 1, "operator": "lte", "boost": 50 },
+    "windSpeed": { "value": 40, "operator": "gte", "boost": 30 },
+    "humidity": { "value": 85, "operator": "gte", "boost": 20 }
+  },
+  "timeWindows": {
+    "bestRunningHours": [
+      { "startHour": 5, "endHour": 7, "boost": 20 },
+      { "startHour": 18, "endHour": 20, "boost": 20 }
+    ],
+    "commuteRisk": [
+      { "startHour": 7, "endHour": 10, "boost": 20 },
+      { "startHour": 17, "endHour": 20, "boost": 20 }
+    ],
+    "marine": [
+      { "startHour": 6, "endHour": 10, "boost": 20 }
+    ]
+  },
+  "cardDataRequirements": {
+    "aqi": ["airQuality"],
+    "uvIndex": [],
+    "pollen": ["airQuality"],
+    "humidity": [],
+    "bestRunningHours": [],
+    "wind": [],
+    "sunrise": [],
+    "marine": ["marine"],
+    "travelAlerts": [],
+    "packingSuggestion": [],
+    "commuteRisk": [],
+    "rainAlert": [],
+    "soilMoisture": ["agri"],
+    "frostAlert": ["agri"],
+    "visibility": [],
+    "comfortIndex": []
+  }
+}

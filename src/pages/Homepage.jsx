@@ -87,108 +87,119 @@ export function Homepage({ weatherData, profile, onOpenSettings }) {
         </div>
       </header>
 
-      {/* ── HERO TEMPERATURE ───────────────────────────────────────────── */}
-      <div className="hero-temp-section">
-        <div className="hero-temp-row">
-          <div className="hero-condition-icon">
-            {getConditionIcon(current.conditionCode)}
-          </div>
-          <div>
-            <div>
-              <span className="hero-temp">{current.temperature}</span>
-              <span className="hero-temp-unit">°c</span>
+      {/* ── RESPONSIVE MAIN DASHBOARD CONTAINER ─────────────────────── */}
+      <div className="homepage-main-container">
+
+        {/* ── LEFT COLUMN (Hero, Alerts, Forecasts) ────────────────────── */}
+        <div className="homepage-left-col">
+          {/* Hero Temperature */}
+          <div className="hero-temp-section">
+            <div className="hero-temp-row">
+              <div className="hero-condition-icon">
+                {getConditionIcon(current.conditionCode)}
+              </div>
+              <div>
+                <div>
+                  <span className="hero-temp">{current.temperature}</span>
+                  <span className="hero-temp-unit">°c</span>
+                </div>
+                <div className="hero-hi-lo">
+                  <span className="hi">↑ {current.tempMax}°c</span>
+                  <span className="lo">↓ {current.tempMin}°c</span>
+                </div>
+              </div>
             </div>
-            <div className="hero-hi-lo">
-              <span className="hi">↑ {current.tempMax}°c</span>
-              <span className="lo">↓ {current.tempMin}°c</span>
+            <div className="hero-condition-row">
+              <span>{current.conditionText}</span>
+              <span style={{ opacity: 0.7 }}>💧 {current.humidity}%</span>
+            </div>
+            <div style={{ marginTop: '4px', fontSize: '0.82rem', opacity: 0.8 }}>
+              Feels like {current.feelsLike}°c · Wind {current.windSpeed} km/h {current.windDirection}
             </div>
           </div>
-        </div>
-        <div className="hero-condition-row">
-          <span>{current.conditionText}</span>
-          <span style={{ opacity: 0.7 }}>💧 {current.humidity}%</span>
-        </div>
-        <div style={{ marginTop: '4px', fontSize: '0.82rem', opacity: 0.8 }}>
-          Feels like {current.feelsLike}°c · Wind {current.windSpeed} km/h {current.windDirection}
-        </div>
-      </div>
 
-      {/* ── ALERT BANNER (pinned above For You) ───────────────────────── */}
-      {alerts && alerts.length > 0 && (
-        <div style={{ padding: '0 16px' }}>
-          <AlertBanner alerts={alerts} />
-        </div>
-      )}
-
-      {/* ── HOURLY FORECAST ────────────────────────────────────────────── */}
-      <div style={{ padding: '0 16px' }}>
-        <HourlyForecast hourly={weatherData.hourly} />
-      </div>
-
-      {/* ── FOR YOU SECTION ────────────────────────────────────────────── */}
-      <div className="section-header">
-        <div className="section-title">
-          <Sparkles size={16} />
-          {t('sections.for_you')}
-        </div>
-        <button
-          onClick={onOpenSettings}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--color-text-primary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            fontSize: '0.8rem',
-            opacity: 0.8
-          }}
-        >
-          <Settings size={14} /> {t('common.edit')}
-        </button>
-      </div>
-
-      <div className="section-content">
-        {forYouCards.length === 0 ? (
-          <Skeleton height="110px" count={3} />
-        ) : (
-          forYouCards.map(({ cardId }) =>
-            renderCard(cardId, weatherData, handleCardFeedback)
-          )
-        )}
-      </div>
-
-      {/* ── MORE FOR YOU ───────────────────────────────────────────────── */}
-      {moreCards.length > 0 && (
-        <>
-          <button
-            className="collapse-btn"
-            onClick={() => setMoreExpanded(e => !e)}
-            aria-expanded={moreExpanded}
-          >
-            {moreExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            {moreExpanded ? t('cards.show_less') : `${t('cards.show_more')} (${moreCards.length})`}
-          </button>
-
-          {moreExpanded && (
-            <div className="section-content" style={{ paddingTop: '8px' }}>
-              {moreCards.map(({ cardId }) =>
-                renderCard(cardId, weatherData, handleCardFeedback)
-              )}
+          {/* Alert Banner */}
+          {alerts && alerts.length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              <AlertBanner alerts={alerts} />
             </div>
           )}
-        </>
-      )}
 
-      <div className="section-divider" />
+          {/* Hourly Forecast */}
+          <div style={{ marginBottom: '16px' }}>
+            <HourlyForecast hourly={weatherData.hourly} />
+          </div>
 
-      {/* ── WEEKLY FORECAST ────────────────────────────────────────────── */}
-      <div className="section-header">
-        <div className="section-title">{t('sections.weekly_forecast')}</div>
-      </div>
-      <div style={{ padding: '0 16px' }}>
-        <DailyForecast daily={weatherData.daily} />
+          {/* Weekly Forecast */}
+          <div className="section-header" style={{ padding: '0 0 10px 0' }}>
+            <div className="section-title">{t('sections.weekly_forecast')}</div>
+          </div>
+          <DailyForecast daily={weatherData.daily} />
+        </div>
+
+        {/* ── RIGHT COLUMN (For You Cards & Persona Switcher) ──────────── */}
+        <div className="homepage-right-col">
+          {/* For You Section Header */}
+          <div className="section-header" style={{ padding: '0 0 10px 0' }}>
+            <div className="section-title">
+              <Sparkles size={16} />
+              {t('sections.for_you')}
+            </div>
+            <button
+              onClick={onOpenSettings}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--color-text-primary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '0.8rem',
+                opacity: 0.8
+              }}
+            >
+              <Settings size={14} /> {t('common.edit')}
+            </button>
+          </div>
+
+          {/* Cards Grid */}
+          <div className="cards-grid">
+            {forYouCards.length === 0 ? (
+              <Skeleton height="110px" count={3} />
+            ) : (
+              forYouCards.map(({ cardId }) =>
+                renderCard(cardId, weatherData, handleCardFeedback)
+              )
+            )}
+          </div>
+
+          {/* More for You Section */}
+          {moreCards.length > 0 && (
+            <>
+              <button
+                className="collapse-btn"
+                onClick={() => setMoreExpanded(e => !e)}
+                aria-expanded={moreExpanded}
+                style={{ width: '100%', margin: '12px 0 4px 0' }}
+              >
+                {moreExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                {moreExpanded ? t('cards.show_less') : `${t('cards.show_more')} (${moreCards.length})`}
+              </button>
+
+              {moreExpanded && (
+                <div className="cards-grid" style={{ paddingTop: '8px' }}>
+                  {moreCards.map(({ cardId }) =>
+                    renderCard(cardId, weatherData, handleCardFeedback)
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="section-divider" style={{ margin: '16px 0' }} />
+        </div>
+
       </div>
 
       {/* ── PERSONA CHIP SWITCHER (sticky bottom bar) ──────────────────── */}

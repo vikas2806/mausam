@@ -148,7 +148,7 @@
 }
 
 .alert-banner.Yellow {
-  background: linear-gradient(135deg, rgba(24bc, 180, 0, 0.95), rgba(245, 127, 23, 0.95));
+  background: linear-gradient(135deg, rgba(253, 216, 53, 0.95), rgba(245, 127, 23, 0.95));
   color: #121820;
   border: 1px solid #ffe082;
 }

@@ -1,0 +1,46 @@
+{
+  "app": {
+    "title": "Mausam",
+    "subtitle": "Unified Mobile App - India Meteorological Department",
+    "imd_tag": "MoES / IMD Official"
+  },
+  "header": {
+    "search": "Search location",
+    "menu": "Menu",
+    "feels_like": "Feels like",
+    "three_hourly": "3 Hourly"
+  },
+  "sections": {
+    "for_you": "For You",
+    "more_for_you": "More for you",
+    "hourly_forecast": "3-Hourly Forecast",
+    "weekly_forecast": "7-Day Forecast",
+    "active_personas": "Your Active Personas"
+  },
+  "personas": {
+    "health": "Health",
+    "fitness": "Outdoor Fitness",
+    "beach": "Beach & Surfing",
+    "travel": "Travelers",
+    "family": "Parents & Families",
+    "agri": "Agriculture",
+    "commute": "Commuters",
+    "events": "Event Planners"
+  },
+  "cards": {
+    "was_helpful": "Was this helpful?",
+    "not_available": "Not available for this location",
+    "show_more": "Show more cards",
+    "show_less": "Show less"
+  },
+  "common": {
+    "today": "Today",
+    "no_rain": "No Rain",
+    "light_rain": "Light Rain",
+    "heavy_rain": "Heavy Rain",
+    "clear": "Clear Sky",
+    "fog": "Dense Fog",
+    "edit": "Edit",
+    "done": "Done"
+  }
+}

@@ -1,0 +1,57 @@
+:root {
+  /* Day Theme Colors */
+  --color-sky-day-top: #0072ce;
+  --color-sky-day-bottom: #004b93;
+  --color-glass-bg-day: rgba(255, 255, 255, 0.18);
+  --color-glass-border-day: rgba(255, 255, 255, 0.28);
+  --color-glass-card-bg-day: rgba(255, 255, 255, 0.15);
+
+  /* Dark Theme Colors */
+  --color-sky-dark-bg: #121820;
+  --color-sky-dark-card: #252d3c;
+  --color-glass-bg-dark: rgba(44, 44, 46, 0.85);
+  --color-glass-border-dark: rgba(255, 255, 255, 0.08);
+
+  /* Text Colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.82);
+  --color-text-muted: rgba(255, 255, 255, 0.60);
+  --color-text-dark-primary: #1c1c1e;
+  --color-text-dark-secondary: #636366;
+
+  /* Alert / Warning Severity Colors (IMD Standards) */
+  --color-alert-red: #e53935;
+  --color-alert-red-bg: rgba(229, 57, 53, 0.25);
+  --color-alert-orange: #fb8c00;
+  --color-alert-orange-bg: rgba(251, 140, 0, 0.25);
+  --color-alert-yellow: #fdd835;
+  --color-alert-yellow-bg: rgba(253, 216, 53, 0.25);
+  --color-alert-green: #4caf50;
+  --color-alert-green-bg: rgba(76, 175, 80, 0.25);
+
+  /* Temperature Gradients */
+  --grad-temp-range: linear-gradient(90deg, #fdd835 0%, #fb8c00 50%, #e53935 100%);
+  --grad-sky-day: linear-gradient(180deg, var(--color-sky-day-top) 0%, var(--color-sky-day-bottom) 100%);
+  --grad-sky-dark: linear-gradient(180deg, #121820 0%, #0d1218 100%);
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-hero: 4rem; /* 64px */
+  --font-size-title-lg: 1.5rem; /* 24px */
+  --font-size-title-md: 1.125rem; /* 18px */
+  --font-size-body: 0.875rem; /* 14px */
+  --font-size-caption: 0.75rem; /* 12px */
+
+  /* Spacing & Radii */
+  --radius-card: 20px;
+  --radius-pill: 9999px;
+  --radius-sm: 8px;
+  --spacing-container: 16px;
+
+  /* Tap Target */
+  --min-tap-target: 44px;
+
+  /* Glassmorphism Shadow */
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.15);
+}

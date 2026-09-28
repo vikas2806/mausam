@@ -1,0 +1,253 @@
+/* Component Styles for Mausam UI Kit */
+
+/* Weather Card */
+.weather-card {
+  position: relative;
+  padding: 16px;
+  margin-bottom: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.weather-card:active {
+  transform: scale(0.99);
+}
+
+.weather-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.weather-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.weather-card-body {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.weather-card-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.weather-card-unit {
+  font-size: 1rem;
+  font-weight: 400;
+  opacity: 0.8;
+  margin-left: 2px;
+}
+
+.weather-card-insight {
+  font-size: 0.825rem;
+  line-height: 1.35;
+  opacity: 0.9;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Risk Badges */
+.severity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.severity-badge.Red {
+  background-color: var(--color-alert-red);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(229, 57, 53, 0.5);
+}
+
+.severity-badge.Orange {
+  background-color: var(--color-alert-orange);
+  color: #ffffff;
+}
+
+.severity-badge.Yellow {
+  background-color: var(--color-alert-yellow);
+  color: #1c1c1e;
+}
+
+.severity-badge.Green {
+  background-color: var(--color-alert-green);
+  color: #ffffff;
+}
+
+/* Thumbs Feedback Buttons */
+.card-feedback-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 6px;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.feedback-btn-group {
+  display: flex;
+  gap: 6px;
+}
+
+.feedback-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  color: var(--color-text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feedback-btn:hover, .feedback-btn.active {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: #ffffff;
+}
+
+/* Alert Banner */
+.alert-banner {
+  padding: 14px 16px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: pulse-border 2s infinite alternate;
+}
+
+.alert-banner.Red {
+  background: linear-gradient(135deg, rgba(229, 57, 53, 0.95), rgba(183, 28, 28, 0.95));
+  border: 1px solid #ff6b6b;
+}
+
+.alert-banner.Orange {
+  background: linear-gradient(135deg, rgba(251, 140, 0, 0.95), rgba(230, 81, 0, 0.95));
+  border: 1px solid #ffb74d;
+}
+
+.alert-banner.Yellow {
+  background: linear-gradient(135deg, rgba(24bc, 180, 0, 0.95), rgba(245, 127, 23, 0.95));
+  color: #121820;
+  border: 1px solid #ffe082;
+}
+
+.alert-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alert-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.alert-description {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  opacity: 0.95;
+}
+
+/* Persona Chips Row */
+.persona-chip-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 12px 0;
+  scrollbar-width: none;
+}
+
+.persona-chip-row::-webkit-scrollbar {
+  display: none;
+}
+
+.persona-chip {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--color-text-primary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.persona-chip.active {
+  background: #ffffff;
+  color: #004b93;
+  font-weight: 700;
+  border-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+}
+
+/* Skeleton Loader */
+.skeleton-card {
+  padding: 16px;
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.08);
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-line {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.08) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 24px 16px;
+  opacity: 0.85;
+}
+
+.empty-state-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.empty-state-message {
+  font-size: 0.8rem;
+  margin-top: 4px;
+  opacity: 0.75;
+}

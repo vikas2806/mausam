@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MockWeatherProvider } from './data/MockWeatherProvider';
+import { DevComponentsPreview } from './pages/DevComponentsPreview';
+import './styles/components.css';
 
 const provider = new MockWeatherProvider();
 
@@ -8,6 +10,9 @@ export default function App() {
   const { t, i18n } = useTranslation();
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [viewDevPreview, setViewDevPreview] = useState(
+    window.location.pathname === '/dev/components' || window.location.search.includes('dev=true')
+  );
 
   useEffect(() => {
     async function loadData() {
@@ -22,6 +27,14 @@ export default function App() {
     i18n.changeLanguage(i18n.language === 'en' ? 'hi' : 'en');
   };
 
+  if (viewDevPreview) {
+    return (
+      <div className="app-viewport">
+        <DevComponentsPreview onBack={() => setViewDevPreview(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="app-viewport">
       <header style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -29,9 +42,22 @@ export default function App() {
           <h1 style={{ fontSize: '1.2rem', fontWeight: 600 }}>{t('app.title')}</h1>
           <p style={{ fontSize: '0.75rem', opacity: 0.8 }}>{t('app.subtitle')}</p>
         </div>
-        <button className="tap-target" onClick={toggleLanguage} style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '16px', padding: '4px 12px' }}>
-          {i18n.language.toUpperCase()}
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            className="tap-target"
+            onClick={() => setViewDevPreview(true)}
+            style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '16px', padding: '4px 10px', fontSize: '0.75rem' }}
+          >
+            /dev/components
+          </button>
+          <button
+            className="tap-target"
+            onClick={toggleLanguage}
+            style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '16px', padding: '4px 12px', fontSize: '0.75rem' }}
+          >
+            {i18n.language.toUpperCase()}
+          </button>
+        </div>
       </header>
 
       <main style={{ padding: '16px', flex: 1 }}>

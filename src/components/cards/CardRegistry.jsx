@@ -5,6 +5,7 @@ import {
   CloudRain, Thermometer, Leaf, AlertTriangle
 } from 'lucide-react';
 import { WeatherCard } from '../WeatherCard';
+import { bestRunningHours, comfortIndex, commuteRisk, packingSuggestion } from '../../engine/metrics';
 
 /** Maps a numeric AQI to an IMD severity badge */
 function aqiBadge(aqi) {
@@ -210,22 +211,19 @@ export function renderCard(cardId, weatherData, onFeedback) {
     }
 
     case 'bestRunningHours': {
-      const safe = current.temperature <= 30 && current.uvIndex <= 6 && (airQuality?.aqi ?? 0) <= 150;
+      const res = bestRunningHours(weatherData);
+      const sev = res.score >= 70 ? 'Green' : res.score >= 45 ? 'Yellow' : 'Orange';
       return (
         <WeatherCard
           key="bestRunningHours"
           cardId="bestRunningHours"
           title="Best Running Window"
           icon={Activity}
-          value={safe ? '5–7 AM' : '6–8 PM'}
+          value={res.window}
           unit=""
-          badgeText={safe ? 'Good Conditions' : 'Heat Advisory'}
-          badgeSeverity={safe ? 'Green' : 'Orange'}
-          insight={
-            safe
-              ? 'Early morning is optimal: cool temperature, low UV, acceptable air quality.'
-              : 'Avoid midday heat. Evening run after 6 PM is safer today.'
-          }
+          badgeText={`Score ${res.score}/100`}
+          badgeSeverity={sev}
+          insight={res.tip}
           onFeedback={onFeedback}
         />
       );
@@ -256,56 +254,38 @@ export function renderCard(cardId, weatherData, onFeedback) {
     }
 
     case 'commuteRisk': {
-      const riskHigh = current.visibility <= 2 || todayRain >= 60;
-      const badge = riskHigh ? { text: 'High Risk', sev: 'Red' } : { text: 'Low Risk', sev: 'Green' };
+      const res = commuteRisk(weatherData);
+      const sevMap = { Low: 'Green', Moderate: 'Yellow', High: 'Orange', Severe: 'Red' };
       return (
         <WeatherCard
           key="commuteRisk"
           cardId="commuteRisk"
-          title="Commute Conditions"
+          title="Commute Risk"
           icon={Car}
-          value={riskHigh ? 'Caution' : 'Clear'}
+          value={res.level}
           unit=""
-          badgeText={badge.text}
-          badgeSeverity={badge.sev}
-          insight={
-            current.visibility <= 1
-              ? 'Dense fog alert — leave 20 min early, use fog lights, maintain low speed.'
-              : todayRain >= 60
-              ? 'Heavy rain expected at commute time. Allow extra travel time.'
-              : 'Clear commute conditions today.'
-          }
+          badgeText={res.leaveBy ? res.leaveBy : `${res.level} Risk`}
+          badgeSeverity={sevMap[res.level]}
+          insight={res.description}
           onFeedback={onFeedback}
         />
       );
     }
 
     case 'comfortIndex': {
-      // Simple comfort score: 100 - penalties for heat/humidity
-      const heatPenalty  = Math.max(0, current.temperature - 28) * 2;
-      const humidPenalty = Math.max(0, current.humidity - 60) * 0.5;
-      const rainPenalty  = todayRain * 0.3;
-      const comfort = Math.max(0, Math.min(100, Math.round(100 - heatPenalty - humidPenalty - rainPenalty)));
-      const b = comfort >= 70 ? { text: 'Comfortable', sev: 'Green' }
-              : comfort >= 45 ? { text: 'Moderate',    sev: 'Yellow' }
-              :                 { text: 'Uncomfortable',sev: 'Red' };
+      const res = comfortIndex(weatherData);
+      const sevMap = { Excellent: 'Green', Good: 'Green', Moderate: 'Yellow', Poor: 'Red' };
       return (
         <WeatherCard
           key="comfortIndex"
           cardId="comfortIndex"
           title="Outdoor Comfort Index"
           icon={Calendar}
-          value={comfort}
+          value={res.score}
           unit="/ 100"
-          badgeText={b.text}
-          badgeSeverity={b.sev}
-          insight={
-            comfort >= 70
-              ? 'Excellent outdoor event conditions! Low chance of weather disruption.'
-              : comfort >= 45
-              ? 'Moderate comfort. Consider shade and hydration for outdoor events.'
-              : 'Poor outdoor comfort — high heat, humidity or rain risk. Have an indoor backup plan.'
-          }
+          badgeText={res.label}
+          badgeSeverity={sevMap[res.label]}
+          insight={res.description}
           onFeedback={onFeedback}
         />
       );
@@ -401,24 +381,19 @@ export function renderCard(cardId, weatherData, onFeedback) {
     }
 
     case 'packingSuggestion': {
-      const suggestions = [];
-      if (todayRain >= 40) suggestions.push('☂️ Raincoat or umbrella');
-      if (current.uvIndex >= 6) suggestions.push('🧴 Sunscreen SPF 30+');
-      if (current.temperature <= 15) suggestions.push('🧥 Warm jacket');
-      if ((airQuality?.aqi ?? 0) > 150) suggestions.push('😷 N95 mask');
-      if (current.windSpeed >= 30) suggestions.push('🧣 Windproof layer');
-      const packText = suggestions.length ? suggestions.join(' · ') : 'Light casual wear is fine today.';
+      const res = packingSuggestion(weatherData);
+      const count = res.items.length;
       return (
         <WeatherCard
           key="packingSuggestion"
           cardId="packingSuggestion"
           title="Packing Suggestions"
           icon={Plane}
-          value="Today's Pack"
+          value={count > 0 ? `${count} Items` : 'Light Pack'}
           unit=""
-          badgeText={suggestions.length > 0 ? `${suggestions.length} items` : 'Light'}
-          badgeSeverity={suggestions.length > 2 ? 'Orange' : 'Green'}
-          insight={packText}
+          badgeText={count > 0 ? `${count} recommended` : 'No special gear'}
+          badgeSeverity={count > 2 ? 'Orange' : count > 0 ? 'Yellow' : 'Green'}
+          insight={res.summary}
           onFeedback={onFeedback}
         />
       );

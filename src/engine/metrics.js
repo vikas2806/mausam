@@ -58,7 +58,7 @@ export function bestRunningHours(weatherData) {
   const temp     = current?.temperature ?? 25;
   const aqi      = airQuality?.aqi ?? 0;
   const humidity = current?.humidity ?? 50;
-  const uv       = current?.uvIndex ?? 5;
+  const uv       = current?.uvIndex ?? 0;
 
   let bestWindow = RUNNING_WINDOWS[0];
   let bestScore  = -1;
@@ -72,13 +72,23 @@ export function bestRunningHours(weatherData) {
   }
 
   const score = Math.round(bestScore);
+  
+  // Identify actual limiting factors from computed metrics
+  const limitingFactors = [];
+  if (temp > 28) limitingFactors.push(`high temperature (${temp}°C)`);
+  if (humidity > 70) limitingFactors.push(`high humidity (${humidity}%)`);
+  if (current?.windSpeed > 30) limitingFactors.push(`strong wind (${current.windSpeed} km/h)`);
+  if (airQuality && aqi > 100) limitingFactors.push(`poor air quality (${aqi} AQI)`);
+
   let tip;
   if (score >= 70) {
-    tip = `${bestWindow.label} is ideal today — cool temperature, acceptable air quality.`;
+    tip = `${bestWindow.label} is ideal today — pleasant temperature (${temp}°C) and comfortable conditions.`;
   } else if (score >= 45) {
-    tip = `${bestWindow.label} is your best option, though conditions aren't perfect. Stay hydrated.`;
+    const factorMsg = limitingFactors.length > 0 ? ` due to ${limitingFactors.join(' and ')}` : '';
+    tip = `${bestWindow.label} is your best option${factorMsg}. Stay hydrated during your run.`;
   } else {
-    tip = `Conditions are poor for running today. Consider indoor exercise or wait for better air quality.`;
+    const factorMsg = limitingFactors.length > 0 ? ` driven by ${limitingFactors.join(' and ')}` : ' due to overall warm conditions';
+    tip = `Conditions are poor for running during ${bestWindow.label}${factorMsg}. Consider indoor workouts.`;
   }
 
   return { window: bestWindow.label, score, tip };

@@ -79,6 +79,7 @@ export function renderCard(cardId, weatherData, onFeedback) {
 
     case 'uvIndex': {
       const b = uvBadge(current.uvIndex);
+      const isNightUv = current.uvIndex === 0;
       return (
         <WeatherCard
           key="uvIndex"
@@ -90,9 +91,13 @@ export function renderCard(cardId, weatherData, onFeedback) {
           badgeText={b.text}
           badgeSeverity={b.severity}
           insight={
-            current.uvIndex >= 8
-              ? 'Peak UV 11 AM–3 PM. Apply SPF 30+ and wear protective clothing.'
-              : `UV is ${b.text.toLowerCase()} today. SPF 15 sufficient for short outdoor stays.`
+            isNightUv
+              ? "It's nighttime (UV 0). Solar radiation is minimal and no sun protection is needed."
+              : current.uvIndex >= 8
+              ? `High UV index (${current.uvIndex}). Apply SPF 30+ sunblock and wear protective eyewear.`
+              : current.uvIndex >= 3
+              ? `Moderate UV (${current.uvIndex}). Wear SPF 15+ for extended outdoor stays.`
+              : `Low UV index (${current.uvIndex}). Outdoor activities are safe with minimal protection.`
           }
           onFeedback={onFeedback}
         />

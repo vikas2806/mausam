@@ -221,6 +221,23 @@ export class OpenWeatherProvider extends WeatherDataProvider {
     const category = aqiCategoryMap[owmAqi] || 'Moderate';
     const computedAqi = aqiValueMap[owmAqi] || 85;
 
+    // Helper for wind degree to cardinal direction
+    const getWindDir = (deg) => {
+      if (deg === undefined || deg === null) return 'NW';
+      const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+      return dirs[Math.round(deg / 45) % 8];
+    };
+
+    // Calculate realistic UV index based on sun position and clouds
+    const nowTs = weatherJson.dt ?? (sys.sunrise ? sys.sunrise + 100 : Math.floor(Date.now() / 1000));
+    const isNight = sys.sunrise && sys.sunset ? (nowTs < sys.sunrise || nowTs > sys.sunset) : false;
+    let computedUv = 0;
+    if (!isNight) {
+      // Approximate solar elevation noon peak ~ 8-10, reduced by cloud coverage
+      const cloudCover = weatherJson.clouds?.all ?? 20;
+      computedUv = Math.max(1, Math.round((8 * (1 - (cloudCover / 100) * 0.5))));
+    }
+
     return {
       location: {
         id: location.id,
@@ -238,10 +255,10 @@ export class OpenWeatherProvider extends WeatherDataProvider {
         tempMax: Math.round(main.temp_max ?? dailyForecast[0]?.tempMax ?? 28),
         humidity: Math.round(main.humidity ?? 50),
         windSpeed: Math.round((wind.speed ?? 3) * 3.6), // m/s to km/h
-        windDirection: 'NW',
+        windDirection: getWindDir(wind.deg),
         conditionText: condInfo.text,
         conditionCode: condInfo.code,
-        uvIndex: 5,
+        uvIndex: computedUv,
         visibility: weatherJson.visibility ? Math.round((weatherJson.visibility / 1000) * 10) / 10 : 8.5,
         pressure: Math.round(main.pressure ?? 1013),
         sunrise: sunriseStr,

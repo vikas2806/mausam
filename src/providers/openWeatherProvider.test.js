@@ -5,6 +5,7 @@ describe('OpenWeatherProvider', () => {
   let provider;
 
   beforeEach(() => {
+    if (typeof localStorage !== 'undefined') localStorage.clear();
     provider = new OpenWeatherProvider('test-api-key');
   });
 

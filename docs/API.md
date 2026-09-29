@@ -121,6 +121,40 @@ export interface WeatherDataProvider {
 
 ---
 
-## 5. Caching & Fallback Guidelines
-- **Cache Duration**: 15 minutes in memory / `sessionStorage`.
-- **Fallback Strategy**: If specific data sub-objects (`marine`, `agri`, `airQuality`) are omitted or return `undefined`, corresponding persona cards gracefully display fallback messages or are hidden by the ranking engine.
+## 5. OpenWeatherMap API Schema Mapping Specification
+
+`OpenWeatherProvider` (`src/providers/openWeatherProvider.js`) integrates OpenWeatherMap REST endpoints and transforms raw payload formats into the `NormalizedWeatherData` schema:
+
+### 5.1 Endpoints Used
+1. **Current Weather**: `GET /data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={apiKey}`
+2. **5-Day / 3-Hour Forecast**: `GET /data/2.5/forecast?lat={lat}&lon={lon}&units=metric&appid={apiKey}`
+3. **Air Pollution**: `GET /data/2.5/air_pollution?lat={lat}&lon={lon}&appid={apiKey}`
+4. **Geocoding**: `GET /geo/1.0/direct?q={query}&limit=5&appid={apiKey}`
+
+### 5.2 Mapping Table
+
+| Normalized Field | OpenWeatherMap API Source | Transformation / Default |
+|---|---|---|
+| `location.name` | `weather.name` / Geocoding `name` | Location name string |
+| `current.temperature` | `weather.main.temp` | Rounded integer (°C) |
+| `current.feelsLike` | `weather.main.feels_like` | Rounded integer (°C) |
+| `current.tempMin` | `weather.main.temp_min` | Minimum temperature (°C) |
+| `current.tempMax` | `weather.main.temp_max` | Maximum temperature (°C) |
+| `current.humidity` | `weather.main.humidity` | Integer percentage (0–100) |
+| `current.windSpeed` | `weather.wind.speed` | Converted from m/s to km/h (`speed * 3.6`) |
+| `current.conditionText` | `weather.weather[0].main` | Mapped via `OWM_CONDITION_MAP` |
+| `current.visibility` | `weather.visibility` | Converted from meters to km (`/ 1000`) |
+| `current.sunrise / sunset` | `weather.sys.sunrise / sunset` | Unix timestamp to `HH:mm AM/PM` string |
+| `hourly[]` | `forecast.list[0..7]` | 8 3-hour slots with `pop * 100` for `rainProbability` |
+| `daily[]` | `forecast.list` grouped by date | Min/Max temps and Max `pop` aggregated per day |
+| `airQuality.aqi` | `air_pollution.list[0].main.aqi` | Mapped 1–5 scale to standard AQI (35, 75, 125, 175, 250) |
+| `airQuality.category` | `air_pollution.list[0].main.aqi` | 1=Good, 2=Satisfactory, 3=Moderate, 4=Poor, 5=Very Poor |
+| `airQuality.pm25 / pm10` | `air_pollution.list[0].components` | `pm2_5` and `pm10` values |
+
+---
+
+## 6. Caching & Fallback Architecture
+- **Cache TTL**: 10 minutes (Dual-tier: In-memory `Map` + `localStorage`).
+- **Provider Switching**: Controlled via `VITE_USE_REAL_WEATHER=true` and `VITE_WEATHER_PROVIDER=openweather` in `.env`.
+- **Fallback Strategy**: If network errors occur or `OPENWEATHER_API_KEY` is missing/invalid (HTTP 401/403/50x), `OpenWeatherProvider` logs a warning and automatically falls back to `MockWeatherProvider`.
+

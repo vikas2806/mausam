@@ -1,87 +1,117 @@
-{
-  "personaCards": {
-    "health": [
-      { "cardId": "aqi", "weight": 40 },
-      { "cardId": "uvIndex", "weight": 30 },
-      { "cardId": "pollen", "weight": 25 },
-      { "cardId": "humidity", "weight": 20 }
+[
+  {
+    "id": "health",
+    "label": "Health-conscious",
+    "icon": "HeartPulse",
+    "desc": "AQI alerts, pollen count, UV index, humidity insights",
+    "cards": ["aqi", "uvIndex", "pollen", "humidity"],
+    "cardWeights": { "aqi": 40, "uvIndex": 30, "pollen": 25, "humidity": 20 },
+    "dangerRules": [
+      { "card": "aqi", "condition": "> 150", "boost": 50 },
+      { "card": "uvIndex", "condition": ">= 8", "boost": 50 },
+      { "card": "humidity", "condition": ">= 85", "boost": 20 }
     ],
-    "fitness": [
-      { "cardId": "bestRunningHours", "weight": 45 },
-      { "cardId": "uvIndex", "weight": 25 },
-      { "cardId": "wind", "weight": 20 },
-      { "cardId": "sunrise", "weight": 15 }
+    "timeRules": []
+  },
+  {
+    "id": "fitness",
+    "label": "Outdoor Fitness",
+    "icon": "Activity",
+    "desc": "Best running hours, wind speed, sunrise & heat index",
+    "cards": ["bestRunningHours", "uvIndex", "wind", "sunrise"],
+    "cardWeights": { "bestRunningHours": 45, "uvIndex": 25, "wind": 20, "sunrise": 15 },
+    "dangerRules": [
+      { "card": "uvIndex", "condition": ">= 8", "boost": 50 },
+      { "card": "wind", "condition": ">= 40", "boost": 30 }
     ],
-    "beach": [
-      { "cardId": "marine", "weight": 50 },
-      { "cardId": "uvIndex", "weight": 25 },
-      { "cardId": "wind", "weight": 20 }
-    ],
-    "travel": [
-      { "cardId": "travelAlerts", "weight": 45 },
-      { "cardId": "packingSuggestion", "weight": 30 },
-      { "cardId": "wind", "weight": 15 }
-    ],
-    "family": [
-      { "cardId": "commuteRisk", "weight": 40 },
-      { "cardId": "rainAlert", "weight": 35 },
-      { "cardId": "uvIndex", "weight": 15 }
-    ],
-    "agri": [
-      { "cardId": "soilMoisture", "weight": 50 },
-      { "cardId": "rainAlert", "weight": 35 },
-      { "cardId": "frostAlert", "weight": 40 }
-    ],
-    "commute": [
-      { "cardId": "commuteRisk", "weight": 45 },
-      { "cardId": "visibility", "weight": 40 },
-      { "cardId": "rainAlert", "weight": 30 }
-    ],
-    "events": [
-      { "cardId": "comfortIndex", "weight": 40 },
-      { "cardId": "rainAlert", "weight": 35 },
-      { "cardId": "wind", "weight": 20 }
+    "timeRules": [
+      { "card": "bestRunningHours", "startHour": 5, "endHour": 7, "boost": 20 },
+      { "card": "bestRunningHours", "startHour": 18, "endHour": 20, "boost": 20 }
     ]
   },
-  "dangerThresholds": {
-    "aqi": { "value": 150, "operator": "gt", "boost": 50 },
-    "uvIndex": { "value": 8, "operator": "gte", "boost": 50 },
-    "temperature": { "value": 40, "operator": "gte", "boost": 50 },
-    "rainProbability": { "value": 70, "operator": "gte", "boost": 50 },
-    "waveHeight": { "value": 2.5, "operator": "gte", "boost": 50 },
-    "visibility": { "value": 1, "operator": "lte", "boost": 50 },
-    "windSpeed": { "value": 40, "operator": "gte", "boost": 30 },
-    "humidity": { "value": 85, "operator": "gte", "boost": 20 }
-  },
-  "timeWindows": {
-    "bestRunningHours": [
-      { "startHour": 5, "endHour": 7, "boost": 20 },
-      { "startHour": 18, "endHour": 20, "boost": 20 }
+  {
+    "id": "beach",
+    "label": "Beachgoers & Swimmers",
+    "icon": "Waves",
+    "desc": "Sea swell height, tide timings, water temperature",
+    "cards": ["marine", "uvIndex", "wind"],
+    "cardWeights": { "marine": 50, "uvIndex": 25, "wind": 20 },
+    "dangerRules": [
+      { "card": "marine", "condition": ">= 2.5", "boost": 50 },
+      { "card": "uvIndex", "condition": ">= 8", "boost": 50 },
+      { "card": "wind", "condition": ">= 40", "boost": 30 }
     ],
-    "commuteRisk": [
-      { "startHour": 7, "endHour": 10, "boost": 20 },
-      { "startHour": 17, "endHour": 20, "boost": 20 }
-    ],
-    "marine": [
-      { "startHour": 6, "endHour": 10, "boost": 20 }
+    "timeRules": [
+      { "card": "marine", "startHour": 6, "endHour": 10, "boost": 20 }
     ]
   },
-  "cardDataRequirements": {
-    "aqi": ["airQuality"],
-    "uvIndex": [],
-    "pollen": ["airQuality"],
-    "humidity": [],
-    "bestRunningHours": [],
-    "wind": [],
-    "sunrise": [],
-    "marine": ["marine"],
-    "travelAlerts": [],
-    "packingSuggestion": [],
-    "commuteRisk": [],
-    "rainAlert": [],
-    "soilMoisture": ["agri"],
-    "frostAlert": ["agri"],
-    "visibility": [],
-    "comfortIndex": []
+  {
+    "id": "travel",
+    "label": "Travelers",
+    "icon": "Plane",
+    "desc": "Destination alerts, flight weather, packing advice",
+    "cards": ["travelAlerts", "packingSuggestion", "wind"],
+    "cardWeights": { "travelAlerts": 45, "packingSuggestion": 30, "wind": 15 },
+    "dangerRules": [
+      { "card": "wind", "condition": ">= 40", "boost": 30 }
+    ],
+    "timeRules": []
+  },
+  {
+    "id": "family",
+    "label": "Family & Kids",
+    "icon": "Users",
+    "desc": "School commute weather, severe rain & storm warnings",
+    "cards": ["commuteRisk", "rainAlert", "uvIndex"],
+    "cardWeights": { "commuteRisk": 40, "rainAlert": 35, "uvIndex": 15 },
+    "dangerRules": [
+      { "card": "rainAlert", "condition": ">= 70", "boost": 50 },
+      { "card": "uvIndex", "condition": ">= 8", "boost": 50 }
+    ],
+    "timeRules": [
+      { "card": "commuteRisk", "startHour": 7, "endHour": 10, "boost": 20 },
+      { "card": "commuteRisk", "startHour": 17, "endHour": 20, "boost": 20 }
+    ]
+  },
+  {
+    "id": "agri",
+    "label": "Agriculture & Gardening",
+    "icon": "Sprout",
+    "desc": "Soil moisture, frost hazards, crop planting guidance",
+    "cards": ["soilMoisture", "rainAlert", "frostAlert"],
+    "cardWeights": { "soilMoisture": 50, "rainAlert": 35, "frostAlert": 40 },
+    "dangerRules": [
+      { "card": "rainAlert", "condition": ">= 70", "boost": 50 }
+    ],
+    "timeRules": []
+  },
+  {
+    "id": "commute",
+    "label": "Daily Commuter",
+    "icon": "Car",
+    "desc": "Fog visibility, traffic risk, storm alerts, leave-by tips",
+    "cards": ["commuteRisk", "visibility", "rainAlert"],
+    "cardWeights": { "commuteRisk": 45, "visibility": 40, "rainAlert": 30 },
+    "dangerRules": [
+      { "card": "visibility", "condition": "<= 1", "boost": 50 },
+      { "card": "rainAlert", "condition": ">= 70", "boost": 50 }
+    ],
+    "timeRules": [
+      { "card": "commuteRisk", "startHour": 7, "endHour": 10, "boost": 20 },
+      { "card": "commuteRisk", "startHour": 17, "endHour": 20, "boost": 20 }
+    ]
+  },
+  {
+    "id": "events",
+    "label": "Outdoor Events",
+    "icon": "Calendar",
+    "desc": "Extended 7-day forecast, rain chance, outdoor comfort",
+    "cards": ["comfortIndex", "rainAlert", "wind"],
+    "cardWeights": { "comfortIndex": 40, "rainAlert": 35, "wind": 20 },
+    "dangerRules": [
+      { "card": "rainAlert", "condition": ">= 70", "boost": 50 },
+      { "card": "wind", "condition": ">= 40", "boost": 30 }
+    ],
+    "timeRules": []
   }
-}
+]

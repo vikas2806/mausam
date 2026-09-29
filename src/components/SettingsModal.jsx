@@ -1,18 +1,9 @@
 import React, { useState } from 'react';
-import { X, Check, RefreshCw } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { getProfile, saveProfile, resetProfile } from '../utils/profileStorage';
-
-const PERSONAS = [
-  { id: 'health', labelKey: 'personas.health' },
-  { id: 'fitness', labelKey: 'personas.fitness' },
-  { id: 'beach', labelKey: 'personas.beach' },
-  { id: 'travel', labelKey: 'personas.travel' },
-  { id: 'family', labelKey: 'personas.family' },
-  { id: 'agri', labelKey: 'personas.agri' },
-  { id: 'commute', labelKey: 'personas.commute' },
-  { id: 'events', labelKey: 'personas.events' }
-];
+import { getProfile, saveProfile, resetProfile, getCustomPersonas, saveCustomPersona, deleteCustomPersona } from '../utils/profileStorage';
+import PERSONAS from '../config/personas.json';
+import CARD_CONFIG from '../config/cardConfig.json';
 
 const LOCATIONS = [
   { id: 'noida-01', name: 'Sector 2, Noida' },
@@ -23,9 +14,20 @@ const LOCATIONS = [
   { id: 'ludhiana-01', name: 'Ludhiana Agromet Belt' }
 ];
 
+const ALL_CARD_IDS = Object.keys(CARD_CONFIG.cardDataRequirements);
+const DEFAULT_CUSTOM_WEIGHT = 20;
+
 export function SettingsModal({ onClose, onProfileUpdated }) {
   const { t } = useTranslation();
   const [profile, setProfileState] = useState(getProfile());
+  const [customPersonas, setCustomPersonasState] = useState(getCustomPersonas());
+  const [showBuilder, setShowBuilder] = useState(false);
+  const [builderLabel, setBuilderLabel] = useState('');
+  const [builderCards, setBuilderCards] = useState([]);
+  const [builderError, setBuilderError] = useState('');
+
+  // All personas = built-in + custom
+  const allPersonas = [...PERSONAS, ...customPersonas];
 
   const togglePersona = (id) => {
     const current = profile.personas || [];
@@ -52,6 +54,56 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
     window.location.reload();
   };
 
+  const toggleBuilderCard = (cardId) => {
+    setBuilderCards(prev =>
+      prev.includes(cardId) ? prev.filter(c => c !== cardId) : [...prev, cardId]
+    );
+  };
+
+  const handleSaveCustomPersona = () => {
+    if (!builderLabel.trim()) { setBuilderError('Please enter a name.'); return; }
+    if (builderCards.length === 0) { setBuilderError('Select at least one card.'); return; }
+    setBuilderError('');
+
+    const id = `custom-${builderLabel.trim().toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+    const cardWeights = {};
+    builderCards.forEach(c => { cardWeights[c] = DEFAULT_CUSTOM_WEIGHT; });
+
+    const newPersona = {
+      id,
+      label: builderLabel.trim(),
+      icon: 'Star',
+      desc: `Custom: ${builderCards.join(', ')}`,
+      cards: builderCards,
+      cardWeights,
+      dangerRules: [],
+      timeRules: []
+    };
+
+    const updated = saveCustomPersona(newPersona);
+    setCustomPersonasState(updated);
+
+    // Auto-activate it
+    const nextProfile = saveProfile({ personas: [...(profile.personas || []), id] });
+    setProfileState(nextProfile);
+    if (onProfileUpdated) onProfileUpdated(nextProfile);
+
+    setShowBuilder(false);
+    setBuilderLabel('');
+    setBuilderCards([]);
+  };
+
+  const handleDeleteCustomPersona = (personaId) => {
+    const updated = deleteCustomPersona(personaId);
+    setCustomPersonasState(updated);
+    // Deactivate if currently active
+    if ((profile.personas || []).includes(personaId)) {
+      const nextProfile = saveProfile({ personas: profile.personas.filter(p => p !== personaId) });
+      setProfileState(nextProfile);
+      if (onProfileUpdated) onProfileUpdated(nextProfile);
+    }
+  };
+
   return (
     <div style={{
       position: 'fixed',
@@ -68,7 +120,7 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Settings & Preferences</h3>
           <button onClick={onClose} className="tap-target" style={{ width: '32px', height: '32px' }}>
-            <X size={20} />
+            <Icons.X size={20} />
           </button>
         </div>
 
@@ -98,40 +150,166 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
           </select>
         </div>
 
-        {/* Active Personas */}
+        {/* Active Personas — loops over personas.json + custom, no hardcoded list */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ fontSize: '0.8rem', opacity: 0.8, display: 'block', marginBottom: '8px' }}>
             Active Personas (Multi-Select)
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            {PERSONAS.map((p) => {
-              const isActive = (profile.personas || []).includes(p.id);
+            {allPersonas.map((persona) => {
+              const isActive = (profile.personas || []).includes(persona.id);
+              const isCustom = customPersonas.some(cp => cp.id === persona.id);
               return (
-                <button
-                  key={p.id}
-                  onClick={() => togglePersona(p.id)}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: '10px',
-                    border: '1px solid',
-                    borderColor: isActive ? '#ffffff' : 'rgba(255,255,255,0.15)',
-                    background: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.05)',
-                    color: '#ffffff',
-                    fontSize: '0.75rem',
-                    textAlign: 'left',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <span>{t(p.labelKey)}</span>
-                  {isActive && <Check size={14} />}
-                </button>
+                <div key={persona.id} style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => togglePersona(persona.id)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: '10px',
+                      border: '1px solid',
+                      borderColor: isActive ? '#ffffff' : 'rgba(255,255,255,0.15)',
+                      background: isActive ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.05)',
+                      color: '#ffffff',
+                      fontSize: '0.75rem',
+                      textAlign: 'left',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {isCustom && <Icons.Star size={10} style={{ opacity: 0.7 }} />}
+                      {persona.label}
+                    </span>
+                    {isActive && <Icons.Check size={14} />}
+                  </button>
+                  {isCustom && (
+                    <button
+                      onClick={() => handleDeleteCustomPersona(persona.id)}
+                      title="Delete custom persona"
+                      style={{
+                        position: 'absolute',
+                        top: '-6px',
+                        right: '-6px',
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        background: 'rgba(229,57,53,0.85)',
+                        border: 'none',
+                        color: '#fff',
+                        fontSize: '10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        lineHeight: 1
+                      }}
+                    >×</button>
+                  )}
+                </div>
               );
             })}
+
+            {/* Build your own button */}
+            <button
+              onClick={() => setShowBuilder(true)}
+              style={{
+                padding: '8px 10px',
+                borderRadius: '10px',
+                border: '1px dashed rgba(255,255,255,0.3)',
+                background: 'rgba(255,255,255,0.04)',
+                color: '#ffffff',
+                fontSize: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              <Icons.Plus size={12} /> Build your own
+            </button>
           </div>
         </div>
+
+        {/* Inline "Build your own" persona builder */}
+        {showBuilder && (
+          <div className="glass-card" style={{ padding: '14px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>New Custom Persona</span>
+              <button onClick={() => setShowBuilder(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}>
+                <Icons.X size={14} />
+              </button>
+            </div>
+
+            <input
+              type="text"
+              value={builderLabel}
+              onChange={e => setBuilderLabel(e.target.value)}
+              placeholder="Persona name..."
+              maxLength={40}
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: '8px',
+                background: 'rgba(255,255,255,0.1)',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.2)',
+                fontSize: '0.8rem',
+                outline: 'none',
+                marginBottom: '10px'
+              }}
+            />
+
+            <div style={{ fontSize: '0.75rem', opacity: 0.8, marginBottom: '6px' }}>Select cards:</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', maxHeight: '160px', overflowY: 'auto' }}>
+              {ALL_CARD_IDS.map(cardId => {
+                const chosen = builderCards.includes(cardId);
+                return (
+                  <button
+                    key={cardId}
+                    type="button"
+                    onClick={() => toggleBuilderCard(cardId)}
+                    style={{
+                      padding: '5px 8px',
+                      borderRadius: '8px',
+                      border: '1px solid',
+                      borderColor: chosen ? '#ffffff' : 'rgba(255,255,255,0.15)',
+                      background: chosen ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.04)',
+                      color: '#ffffff',
+                      fontSize: '0.7rem',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    {cardId}
+                  </button>
+                );
+              })}
+            </div>
+
+            {builderError && <div style={{ color: '#ff6b6b', fontSize: '0.75rem', marginTop: '6px' }}>{builderError}</div>}
+
+            <button
+              onClick={handleSaveCustomPersona}
+              style={{
+                marginTop: '10px',
+                width: '100%',
+                padding: '8px',
+                borderRadius: '10px',
+                background: '#ffffff',
+                color: '#004b93',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Save Custom Persona
+            </button>
+          </div>
+        )}
 
         {/* Reset Button */}
         <div style={{ paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between' }}>
@@ -148,7 +326,7 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
               cursor: 'pointer'
             }}
           >
-            <RefreshCw size={14} /> Re-run Onboarding
+            <Icons.RefreshCw size={14} /> Re-run Onboarding
           </button>
 
           <button

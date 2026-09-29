@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   scoreCard,
   rankCards,
@@ -51,7 +51,7 @@ const agriWeather = {
   agri: { soilMoisture: 42, soilTemp: 18, frostRisk: false, irrigationAdvice: 'Adequate moisture.' }
 };
 
-// ── Unit tests ────────────────────────────────────────────────────────────────
+// ── evaluateThreshold (backwards-compat export) ───────────────────────────────
 
 describe('evaluateThreshold', () => {
   it('evaluates gt operator correctly', () => {
@@ -74,57 +74,126 @@ describe('evaluateThreshold', () => {
   });
 });
 
+// ── calcDangerBoost ───────────────────────────────────────────────────────────
+// Pass explicit persona objects so tests are independent of default config.
+
+const healthPersona = {
+  id: 'health',
+  cards: ['aqi', 'uvIndex', 'pollen', 'humidity'],
+  cardWeights: { aqi: 40, uvIndex: 30, pollen: 25, humidity: 20 },
+  dangerRules: [
+    { card: 'aqi',     condition: '> 150', boost: 50 },
+    { card: 'uvIndex', condition: '>= 8',  boost: 50 },
+    { card: 'humidity',condition: '>= 85', boost: 20 }
+  ],
+  timeRules: []
+};
+
+const commutePersona = {
+  id: 'commute',
+  cards: ['commuteRisk', 'visibility', 'rainAlert'],
+  cardWeights: { commuteRisk: 45, visibility: 40, rainAlert: 30 },
+  dangerRules: [
+    { card: 'visibility', condition: '<= 1',  boost: 50 },
+    { card: 'rainAlert',  condition: '>= 70', boost: 50 }
+  ],
+  timeRules: [
+    { card: 'commuteRisk', startHour: 7,  endHour: 10, boost: 20 },
+    { card: 'commuteRisk', startHour: 17, endHour: 20, boost: 20 }
+  ]
+};
+
+const fitnessPersona = {
+  id: 'fitness',
+  cards: ['bestRunningHours', 'uvIndex', 'wind', 'sunrise'],
+  cardWeights: { bestRunningHours: 45, uvIndex: 25, wind: 20, sunrise: 15 },
+  dangerRules: [
+    { card: 'uvIndex', condition: '>= 8',  boost: 50 },
+    { card: 'wind',    condition: '>= 40', boost: 30 }
+  ],
+  timeRules: [
+    { card: 'bestRunningHours', startHour: 5,  endHour: 7,  boost: 20 },
+    { card: 'bestRunningHours', startHour: 18, endHour: 20, boost: 20 }
+  ]
+};
+
+const beachPersona = {
+  id: 'beach',
+  cards: ['marine', 'uvIndex', 'wind'],
+  cardWeights: { marine: 50, uvIndex: 25, wind: 20 },
+  dangerRules: [
+    { card: 'marine',  condition: '>= 2.5', boost: 50 },
+    { card: 'uvIndex', condition: '>= 8',   boost: 50 },
+    { card: 'wind',    condition: '>= 40',  boost: 30 }
+  ],
+  timeRules: [
+    { card: 'marine', startHour: 6, endHour: 10, boost: 20 }
+  ]
+};
+
+const agriPersona = {
+  id: 'agri',
+  cards: ['soilMoisture', 'rainAlert', 'frostAlert'],
+  cardWeights: { soilMoisture: 50, rainAlert: 35, frostAlert: 40 },
+  dangerRules: [{ card: 'rainAlert', condition: '>= 70', boost: 50 }],
+  timeRules: []
+};
+
 describe('calcDangerBoost', () => {
   it('adds +50 boost when AQI exceeds 150', () => {
-    expect(calcDangerBoost('aqi', dangerousWeather)).toBe(50);
+    expect(calcDangerBoost('aqi', dangerousWeather, [healthPersona])).toBe(50);
   });
 
   it('returns 0 when AQI is below threshold', () => {
-    expect(calcDangerBoost('aqi', baseWeather)).toBe(0);
+    expect(calcDangerBoost('aqi', baseWeather, [healthPersona])).toBe(0);
   });
 
   it('adds +50 boost when UV index is 8 or above', () => {
-    expect(calcDangerBoost('uvIndex', dangerousWeather)).toBe(50);
+    expect(calcDangerBoost('uvIndex', dangerousWeather, [healthPersona])).toBe(50);
   });
 
   it('adds +50 boost when rain probability >= 70%', () => {
-    expect(calcDangerBoost('rainAlert', dangerousWeather)).toBe(50);
+    expect(calcDangerBoost('rainAlert', dangerousWeather, [commutePersona])).toBe(50);
   });
 
   it('adds +50 boost when visibility <= 1km', () => {
-    expect(calcDangerBoost('visibility', dangerousWeather)).toBe(50);
+    expect(calcDangerBoost('visibility', dangerousWeather, [commutePersona])).toBe(50);
   });
 
-  it('returns 0 for cards with no metric mapping', () => {
-    expect(calcDangerBoost('sunrise', baseWeather)).toBe(0);
+  it('returns 0 for cards with no danger rules', () => {
+    expect(calcDangerBoost('sunrise', baseWeather, [fitnessPersona])).toBe(0);
   });
 });
+
+// ── calcTimeBoost ─────────────────────────────────────────────────────────────
 
 describe('calcTimeBoost', () => {
   it('adds boost for running card during early morning window', () => {
-    expect(calcTimeBoost('bestRunningHours', 6)).toBe(20);
+    expect(calcTimeBoost('bestRunningHours', 6, [fitnessPersona])).toBe(20);
   });
 
   it('adds boost for running card during evening window', () => {
-    expect(calcTimeBoost('bestRunningHours', 19)).toBe(20);
+    expect(calcTimeBoost('bestRunningHours', 19, [fitnessPersona])).toBe(20);
   });
 
   it('adds no boost for running card outside windows', () => {
-    expect(calcTimeBoost('bestRunningHours', 14)).toBe(0);
+    expect(calcTimeBoost('bestRunningHours', 14, [fitnessPersona])).toBe(0);
   });
 
   it('adds boost for commute card during morning rush', () => {
-    expect(calcTimeBoost('commuteRisk', 8)).toBe(20);
+    expect(calcTimeBoost('commuteRisk', 8, [commutePersona])).toBe(20);
   });
 
   it('adds boost for marine card during beach morning hours', () => {
-    expect(calcTimeBoost('marine', 7)).toBe(20);
+    expect(calcTimeBoost('marine', 7, [beachPersona])).toBe(20);
   });
 
   it('returns 0 for cards with no time windows', () => {
-    expect(calcTimeBoost('aqi', 10)).toBe(0);
+    expect(calcTimeBoost('aqi', 10, [healthPersona])).toBe(0);
   });
 });
+
+// ── isCardAvailable ───────────────────────────────────────────────────────────
 
 describe('isCardAvailable', () => {
   it('marks marine card unavailable when marine data is missing', () => {
@@ -149,66 +218,108 @@ describe('isCardAvailable', () => {
   });
 });
 
+// ── scoreCard ─────────────────────────────────────────────────────────────────
+
 describe('scoreCard', () => {
+  const registry = [healthPersona, commutePersona, fitnessPersona, beachPersona, agriPersona];
+
   it('scores 0 when card is irrelevant to active personas', () => {
-    // marine card is not in health/commute personas
-    expect(scoreCard('marine', ['health', 'commute'], baseWeather, 10)).toBe(0);
+    // marine not in health/commute
+    expect(scoreCard('marine', ['health', 'commute'], baseWeather, 10, registry)).toBe(0);
   });
 
-  it('computes base score from personaWeight', () => {
-    // health → aqi weight is 40, no danger (aqi 90), no time boost
-    const score = scoreCard('aqi', ['health'], baseWeather, 10);
-    expect(score).toBe(40);
+  it('computes base score from personaWeight (single persona)', () => {
+    // health → aqi weight 40, no danger (aqi 90), no time boost
+    expect(scoreCard('aqi', ['health'], baseWeather, 10, registry)).toBe(40);
   });
 
   it('adds dangerBoost on top of personaWeight', () => {
     // health → aqi weight 40 + dangerBoost 50 (aqi 200 > 150)
-    const score = scoreCard('aqi', ['health'], dangerousWeather, 10);
-    expect(score).toBe(90);
+    expect(scoreCard('aqi', ['health'], dangerousWeather, 10, registry)).toBe(90);
   });
 
   it('adds timeBoost for relevant time window', () => {
     // fitness → bestRunningHours weight 45 + timeBoost 20 at 06:00
-    const score = scoreCard('bestRunningHours', ['fitness'], baseWeather, 6);
-    expect(score).toBe(65);
+    expect(scoreCard('bestRunningHours', ['fitness'], baseWeather, 6, registry)).toBe(65);
   });
 
-  it('takes max weight when same card exists in multiple active personas', () => {
-    // uvIndex: health=30, fitness=25 → max=30
-    const score = scoreCard('uvIndex', ['health', 'fitness'], baseWeather, 10);
-    expect(score).toBe(30);
+  it('sums weights additively when same card exists in multiple active personas', () => {
+    // uvIndex: health=30 + fitness=25 = 55 (additive merge, not max)
+    expect(scoreCard('uvIndex', ['health', 'fitness'], baseWeather, 10, registry)).toBe(55);
   });
 });
 
+// ── rankCards ─────────────────────────────────────────────────────────────────
+
 describe('rankCards', () => {
+  const registry = [healthPersona, commutePersona, fitnessPersona, beachPersona, agriPersona];
+
   it('returns ranked cards sorted by score descending', () => {
-    const ranked = rankCards(['health', 'commute'], dangerousWeather, 10);
+    const ranked = rankCards(['health', 'commute'], dangerousWeather, 10, registry);
     expect(ranked[0].score).toBeGreaterThanOrEqual(ranked[1].score);
     expect(ranked).not.toHaveLength(0);
   });
 
   it('places unavailable cards last in the list', () => {
-    // marine not available in dangerousWeather (no marine obj)
-    const ranked = rankCards(['beach', 'health'], dangerousWeather, 8);
+    const ranked = rankCards(['beach', 'health'], dangerousWeather, 8, registry);
     const marineEntry = ranked.find(r => r.cardId === 'marine');
     const availableEntries = ranked.filter(r => r.isAvailable);
     if (marineEntry && availableEntries.length > 0) {
       const lastAvailableIdx = ranked.indexOf(availableEntries[availableEntries.length - 1]);
-      const marineIdx = ranked.indexOf(marineEntry);
-      expect(marineIdx).toBeGreaterThan(lastAvailableIdx);
+      expect(ranked.indexOf(marineEntry)).toBeGreaterThan(lastAvailableIdx);
     }
   });
 
   it('only includes cards relevant to active personas', () => {
-    // farming persona should include agri cards
-    const ranked = rankCards(['agri'], agriWeather, 10);
+    const ranked = rankCards(['agri'], agriWeather, 10, registry);
     const cardIds = ranked.map(r => r.cardId);
     expect(cardIds).toContain('soilMoisture');
     expect(cardIds).toContain('frostAlert');
   });
 
   it('returns empty array for empty personas list', () => {
-    const ranked = rankCards([], baseWeather, 10);
-    expect(ranked).toHaveLength(0);
+    expect(rankCards([], baseWeather, 10, registry)).toHaveLength(0);
+  });
+
+  // ── NEW TEST: brand-new persona, zero engine changes required ──────────────
+  it('ranks cards for a brand-new persona added to the registry with no engine code change', () => {
+    // "night-owl" persona: not in config/personas.json, injected only at test time
+    const nightOwlPersona = {
+      id: 'night-owl',
+      label: 'Night Owl',
+      icon: 'Moon',
+      desc: 'Late night conditions: visibility, humidity, pollen',
+      cards: ['visibility', 'humidity', 'pollen'],
+      cardWeights: { visibility: 35, humidity: 20, pollen: 15 },
+      dangerRules: [
+        { card: 'visibility', condition: '<= 1', boost: 50 }
+      ],
+      timeRules: [
+        { card: 'visibility', startHour: 22, endHour: 24, boost: 10 },
+        { card: 'visibility', startHour: 0,  endHour: 5,  boost: 10 }
+      ]
+    };
+
+    const testRegistry = [...registry, nightOwlPersona];
+
+    // The engine must rank cards purely from the persona object — no code changes
+    const ranked = rankCards(['night-owl'], baseWeather, 23, testRegistry);
+    const cardIds = ranked.map(r => r.cardId);
+
+    expect(cardIds).toContain('visibility');
+    expect(cardIds).toContain('humidity');
+    // pollen requires airQuality — present in baseWeather
+    expect(cardIds).toContain('pollen');
+
+    // visibility should score 35 (weight) + 10 (time: hour 23 in [22,24)) = 45
+    const visEntry = ranked.find(r => r.cardId === 'visibility');
+    expect(visEntry.score).toBe(45);
+
+    // humidity should score 20 (no danger/time boost at 23:00 for this persona)
+    const humEntry = ranked.find(r => r.cardId === 'humidity');
+    expect(humEntry.score).toBe(20);
+
+    // visibility must outrank humidity
+    expect(ranked.indexOf(visEntry)).toBeLessThan(ranked.indexOf(humEntry));
   });
 });

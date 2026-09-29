@@ -1,21 +1,9 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  HeartPulse, Activity, Waves, Plane, Users, Sprout, Car, Calendar,
-  MapPin, CheckCircle, ArrowRight, ShieldCheck, Info
-} from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { saveProfile, setOnboardingCompleted } from '../utils/profileStorage';
-
-const PERSONA_OPTIONS = [
-  { id: 'health', icon: HeartPulse, labelKey: 'personas.health', desc: 'AQI alerts, pollen count, UV index, humidity insights' },
-  { id: 'fitness', icon: Activity, labelKey: 'personas.fitness', desc: 'Best running hours, wind speed, sunrise & heat index' },
-  { id: 'beach', icon: Waves, labelKey: 'personas.beach', desc: 'Sea swell height, tide timings, water temperature' },
-  { id: 'travel', icon: Plane, labelKey: 'personas.travel', desc: 'Destination alerts, flight weather, packing advice' },
-  { id: 'family', icon: Users, labelKey: 'personas.family', desc: 'School commute weather, severe rain & storm warnings' },
-  { id: 'agri', icon: Sprout, labelKey: 'personas.agri', desc: 'Soil moisture, frost hazards, crop planting guidance' },
-  { id: 'commute', icon: Car, labelKey: 'personas.commute', desc: 'Fog visibility, traffic risk, storm alerts, leave-by tips' },
-  { id: 'events', icon: Calendar, labelKey: 'personas.events', desc: 'Extended 7-day forecast, rain chance, outdoor comfort' }
-];
+import PERSONAS from '../config/personas.json';
+import CARD_CONFIG from '../config/cardConfig.json';
 
 const MOCK_LOCATIONS = [
   { id: 'noida-01', name: 'Sector 2, Noida (Delhi NCR)' },
@@ -25,6 +13,12 @@ const MOCK_LOCATIONS = [
   { id: 'goa-01', name: 'Calangute, Goa' },
   { id: 'ludhiana-01', name: 'Ludhiana Agricultural District, Punjab' }
 ];
+
+// All card IDs known to the system (from cardDataRequirements keys)
+const ALL_CARD_IDS = Object.keys(CARD_CONFIG.cardDataRequirements);
+
+// Default weights for "Build your own" persona — equal weighting
+const DEFAULT_CUSTOM_WEIGHT = 20;
 
 export function Onboarding({ onComplete }) {
   const { t } = useTranslation();
@@ -36,6 +30,12 @@ export function Onboarding({ onComplete }) {
     outdoorRunner: false,
     dailyCommuter: true
   });
+
+  // "Build your own" persona state
+  const [showBuildOwn, setShowBuildOwn] = useState(false);
+  const [customLabel, setCustomLabel] = useState('');
+  const [customCards, setCustomCards] = useState([]);
+  const [buildError, setBuildError] = useState('');
 
   const togglePersona = (id) => {
     if (selectedPersonas.includes(id)) {
@@ -49,6 +49,44 @@ export function Onboarding({ onComplete }) {
 
   const toggleHealthInput = (key) => {
     setHealthInputs({ ...healthInputs, [key]: !healthInputs[key] });
+  };
+
+  const toggleCustomCard = (cardId) => {
+    setCustomCards(prev =>
+      prev.includes(cardId) ? prev.filter(c => c !== cardId) : [...prev, cardId]
+    );
+  };
+
+  const handleSaveCustomPersona = () => {
+    if (!customLabel.trim()) { setBuildError('Please enter a name.'); return; }
+    if (customCards.length === 0) { setBuildError('Select at least one card.'); return; }
+    setBuildError('');
+
+    const id = `custom-${customLabel.trim().toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+    const cardWeights = {};
+    customCards.forEach(c => { cardWeights[c] = DEFAULT_CUSTOM_WEIGHT; });
+
+    const customPersona = {
+      id,
+      label: customLabel.trim(),
+      icon: 'Star',
+      desc: `Custom: ${customCards.join(', ')}`,
+      cards: customCards,
+      cardWeights,
+      dangerRules: [],
+      timeRules: []
+    };
+
+    // Save to localStorage via profileStorage
+    import('../utils/profileStorage').then(({ saveCustomPersona }) => {
+      saveCustomPersona(customPersona);
+    });
+
+    // Auto-select the new persona
+    setSelectedPersonas(prev => [...prev, id]);
+    setShowBuildOwn(false);
+    setCustomLabel('');
+    setCustomCards([]);
   };
 
   const handleFinish = () => {
@@ -75,7 +113,7 @@ export function Onboarding({ onComplete }) {
           fontSize: '0.75rem',
           fontWeight: 600
         }}>
-          <ShieldCheck size={14} />
+          <Icons.ShieldCheck size={14} />
           <span>IMD Mausam Personalization</span>
         </div>
       </div>
@@ -110,7 +148,7 @@ export function Onboarding({ onComplete }) {
         </div>
       )}
 
-      {step === 2 && (
+      {step === 2 && !showBuildOwn && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', margin: '12px 0' }}>
           <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '4px' }}>
             Choose Your Personas
@@ -119,14 +157,15 @@ export function Onboarding({ onComplete }) {
             Select one or multiple profiles (multi-select supported):
           </p>
 
+          {/* Loop over personas.json — no hardcoded list */}
           <div className="onboarding-persona-grid">
-            {PERSONA_OPTIONS.map((item) => {
-              const IconComp = item.icon;
-              const isSelected = selectedPersonas.includes(item.id);
+            {PERSONAS.map((persona) => {
+              const IconComp = Icons[persona.icon] || Icons.User;
+              const isSelected = selectedPersonas.includes(persona.id);
               return (
                 <div
-                  key={item.id}
-                  onClick={() => togglePersona(item.id)}
+                  key={persona.id}
+                  onClick={() => togglePersona(persona.id)}
                   className="glass-card"
                   style={{
                     padding: '12px',
@@ -151,13 +190,48 @@ export function Onboarding({ onComplete }) {
                     <IconComp size={20} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{t(item.labelKey)}</div>
-                    <div style={{ fontSize: '0.75rem', opacity: 0.8, marginTop: '2px' }}>{item.desc}</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{persona.label}</div>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.8, marginTop: '2px' }}>{persona.desc}</div>
                   </div>
-                  {isSelected && <CheckCircle size={20} color="#ffffff" />}
+                  {isSelected && <Icons.CheckCircle size={20} color="#ffffff" />}
                 </div>
               );
             })}
+
+            {/* "Build your own" option */}
+            <div
+              onClick={() => setShowBuildOwn(true)}
+              className="glass-card"
+              style={{
+                padding: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                cursor: 'pointer',
+                background: 'rgba(255,255,255,0.07)',
+                borderColor: 'rgba(255,255,255,0.3)',
+                borderStyle: 'dashed'
+              }}
+            >
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: 'rgba(255,255,255,0.15)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Icons.Plus size={20} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Build Your Own Persona</div>
+                <div style={{ fontSize: '0.75rem', opacity: 0.8, marginTop: '2px' }}>
+                  Pick any cards from the library and create a custom profile
+                </div>
+              </div>
+            </div>
           </div>
 
           <div style={{ paddingTop: '12px' }}>
@@ -181,6 +255,107 @@ export function Onboarding({ onComplete }) {
         </div>
       )}
 
+      {/* "Build your own" panel */}
+      {step === 2 && showBuildOwn && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', margin: '12px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <button
+              onClick={() => setShowBuildOwn(false)}
+              style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex' }}
+            >
+              <Icons.ArrowLeft size={20} />
+            </button>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Build Your Own Persona</h3>
+          </div>
+
+          <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+            Persona Name
+          </label>
+          <input
+            type="text"
+            value={customLabel}
+            onChange={e => setCustomLabel(e.target.value)}
+            placeholder="e.g. Night Owl, Cyclist..."
+            maxLength={40}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              borderRadius: '12px',
+              background: 'rgba(255,255,255,0.15)',
+              color: '#ffffff',
+              border: '1px solid rgba(255,255,255,0.3)',
+              fontSize: '0.9rem',
+              outline: 'none',
+              marginBottom: '16px'
+            }}
+          />
+
+          <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+            Select Cards ({customCards.length} chosen)
+          </label>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '8px',
+            overflowY: 'auto',
+            flex: 1,
+            paddingBottom: '4px'
+          }}>
+            {ALL_CARD_IDS.map(cardId => {
+              const isChosen = customCards.includes(cardId);
+              return (
+                <button
+                  key={cardId}
+                  type="button"
+                  onClick={() => toggleCustomCard(cardId)}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    border: '1px solid',
+                    borderColor: isChosen ? '#ffffff' : 'rgba(255,255,255,0.2)',
+                    background: isChosen ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)',
+                    color: '#ffffff',
+                    fontSize: '0.75rem',
+                    fontWeight: isChosen ? 700 : 400,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    textAlign: 'left'
+                  }}
+                >
+                  <span>{cardId}</span>
+                  {isChosen && <Icons.Check size={12} />}
+                </button>
+              );
+            })}
+          </div>
+
+          {buildError && (
+            <div style={{ color: '#ff6b6b', fontSize: '0.8rem', marginTop: '8px' }}>{buildError}</div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSaveCustomPersona}
+            style={{
+              marginTop: '12px',
+              width: '100%',
+              background: '#ffffff',
+              color: '#004b93',
+              fontWeight: 700,
+              borderRadius: '16px',
+              padding: '12px',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              border: 'none'
+            }}
+          >
+            Save Persona & Add to Selection
+          </button>
+        </div>
+      )}
+
       {step === 3 && (
         <div style={{ margin: 'auto 0' }}>
           <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '6px' }}>
@@ -192,7 +367,7 @@ export function Onboarding({ onComplete }) {
 
           <div style={{ marginBottom: '20px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
-              <MapPin size={14} style={{ display: 'inline', marginRight: '4px' }} />
+              <Icons.MapPin size={14} style={{ display: 'inline', marginRight: '4px' }} />
               Primary City / District
             </label>
             <select
@@ -219,7 +394,7 @@ export function Onboarding({ onComplete }) {
 
           <div className="glass-card" style={{ padding: '16px', marginBottom: '20px' }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Info size={14} /> Optional Health Inputs
+              <Icons.Info size={14} /> Optional Health Inputs
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

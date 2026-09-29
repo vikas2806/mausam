@@ -1,0 +1,39 @@
+{
+  "cardDataRequirements": {
+    "aqi":               ["airQuality"],
+    "uvIndex":           [],
+    "pollen":            ["airQuality"],
+    "humidity":          [],
+    "bestRunningHours":  [],
+    "wind":              [],
+    "sunrise":           [],
+    "marine":            ["marine"],
+    "travelAlerts":      [],
+    "packingSuggestion": [],
+    "commuteRisk":       [],
+    "rainAlert":         [],
+    "soilMoisture":      ["agri"],
+    "frostAlert":        ["agri"],
+    "visibility":        [],
+    "comfortIndex":      []
+  },
+  "cardMetricMap": {
+    "aqi":              { "field": ["airQuality", "aqi"] },
+    "uvIndex":          { "field": ["current", "uvIndex"] },
+    "pollen":           null,
+    "humidity":         { "field": ["current", "humidity"] },
+    "wind":             { "field": ["current", "windSpeed"] },
+    "visibility":       { "field": ["current", "visibility"] },
+    "rainAlert":        { "field": ["daily", "0", "rainProbability"] },
+    "marine":           { "field": ["marine", "waveHeight"] },
+    "bestRunningHours": { "field": ["current", "temperature"] },
+    "commuteRisk":      { "field": ["current", "visibility"] },
+    "comfortIndex":     { "field": ["current", "humidity"] },
+    "temperature":      { "field": ["current", "temperature"] },
+    "sunrise":          null,
+    "travelAlerts":     null,
+    "packingSuggestion":null,
+    "soilMoisture":     null,
+    "frostAlert":       null
+  }
+}

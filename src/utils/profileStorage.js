@@ -71,3 +71,52 @@ export function resetProfile() {
   localStorage.removeItem(ONBOARDING_COMPLETED_KEY);
   return DEFAULT_PROFILE;
 }
+
+// ── Custom Personas ────────────────────────────────────────────────────────────
+
+const CUSTOM_PERSONAS_KEY = 'mausam_custom_personas';
+
+/**
+ * Retrieve all user-created custom persona objects.
+ * @returns {object[]}
+ */
+export function getCustomPersonas() {
+  try {
+    const raw = localStorage.getItem(CUSTOM_PERSONAS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save a new custom persona object. Overwrites if same id exists.
+ * @param {object} persona  Full persona definition matching personas.json schema.
+ */
+export function saveCustomPersona(persona) {
+  try {
+    const existing = getCustomPersonas().filter(p => p.id !== persona.id);
+    const updated = [...existing, persona];
+    localStorage.setItem(CUSTOM_PERSONAS_KEY, JSON.stringify(updated));
+    return updated;
+  } catch (err) {
+    console.error('Failed to save custom persona:', err);
+    return getCustomPersonas();
+  }
+}
+
+/**
+ * Delete a custom persona by id.
+ * @param {string} personaId
+ */
+export function deleteCustomPersona(personaId) {
+  try {
+    const updated = getCustomPersonas().filter(p => p.id !== personaId);
+    localStorage.setItem(CUSTOM_PERSONAS_KEY, JSON.stringify(updated));
+    return updated;
+  } catch {
+    return getCustomPersonas();
+  }
+}

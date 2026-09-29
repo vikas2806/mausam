@@ -8,19 +8,9 @@ import { HourlyForecast, getConditionIcon } from '../components/HourlyForecast';
 import { DailyForecast } from '../components/DailyForecast';
 import { Skeleton } from '../components/Skeleton';
 import { renderCard } from '../components/cards/CardRegistry';
-import { saveProfile } from '../utils/profileStorage';
+import { saveProfile, getCustomPersonas } from '../utils/profileStorage';
+import PERSONAS from '../config/personas.json';
 import '../styles/homepage.css';
-
-const PERSONA_CHIP_DEFS = [
-  { id: 'health',  labelKey: 'personas.health',  iconName: 'HeartPulse' },
-  { id: 'fitness', labelKey: 'personas.fitness',  iconName: 'Activity' },
-  { id: 'beach',   labelKey: 'personas.beach',    iconName: 'Waves' },
-  { id: 'travel',  labelKey: 'personas.travel',   iconName: 'Plane' },
-  { id: 'family',  labelKey: 'personas.family',   iconName: 'Users' },
-  { id: 'agri',    labelKey: 'personas.agri',     iconName: 'Sprout' },
-  { id: 'commute', labelKey: 'personas.commute',  iconName: 'Car' },
-  { id: 'events',  labelKey: 'personas.events',   iconName: 'Calendar' },
-];
 
 const FOR_YOU_COUNT = 4;
 
@@ -30,10 +20,13 @@ export function Homepage({ weatherData, profile, onOpenSettings }) {
   const [moreExpanded, setMoreExpanded] = useState(false);
   const [rankedCards, setRankedCards] = useState([]);
 
+  // Merge built-in personas with any custom ones from localStorage
+  const allPersonas = [...PERSONAS, ...getCustomPersonas()];
+
   // Re-rank whenever personas or weather data changes
   useEffect(() => {
     const currentHour = new Date().getHours();
-    const ranked = rankCards(activePersonas, weatherData, currentHour);
+    const ranked = rankCards(activePersonas, weatherData, currentHour, allPersonas);
     setRankedCards(ranked);
   }, [activePersonas, weatherData]);
 
@@ -223,13 +216,14 @@ export function Homepage({ weatherData, profile, onOpenSettings }) {
           {t('sections.active_personas')}
         </div>
         <div className="persona-chip-row">
-          {PERSONA_CHIP_DEFS.map(chip => (
+          {/* Loop over ALL personas (built-in + custom) — no hardcoded list */}
+          {allPersonas.map(persona => (
             <PersonaChip
-              key={chip.id}
-              id={chip.id}
-              label={t(chip.labelKey)}
-              iconName={chip.iconName}
-              active={activePersonas.includes(chip.id)}
+              key={persona.id}
+              id={persona.id}
+              label={persona.label}
+              iconName={persona.icon}
+              active={activePersonas.includes(persona.id)}
               onClick={togglePersona}
             />
           ))}

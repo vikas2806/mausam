@@ -158,3 +158,19 @@ export interface WeatherDataProvider {
 - **Provider Switching**: Controlled via `VITE_USE_REAL_WEATHER=true` and `VITE_WEATHER_PROVIDER=openweather` in `.env`.
 - **Fallback Strategy**: If network errors occur or `OPENWEATHER_API_KEY` is missing/invalid (HTTP 401/403/50x), `OpenWeatherProvider` logs a warning and automatically falls back to `MockWeatherProvider`.
 
+---
+
+## 7. Dynamic Card Insight Generation & Solar UV Engine
+
+### Solar Hour UV Calculation
+To prevent invalid daytime UV values at night:
+- Solar hours are computed dynamically comparing current timestamp `nowTs` against location `sunrise` and `sunset` timestamps.
+- **Nighttime (`nowTs < sunrise` or `nowTs > sunset`)**: `uvIndex = 0`.
+- **Daytime**: `uvIndex` scales dynamically with cloud cover reduction (`uvIndex = max(1, round(8 * (1 - cloudCover * 0.5)))`).
+
+### Factor-Specific Card Insights
+Card insights avoid canned string banks. Every card insight dynamically inspects the contributing weather factors:
+- **Best Running Window**: Identifies exact limiting inputs (e.g. `high temperature (32°C)`, `high humidity (80%)`, `strong wind (32 km/h)`). References `AQI` only if air quality data is explicitly present for that persona.
+- **UV Index**: Differentiates zero nighttime UV ("It's nighttime (UV 0). Solar radiation is minimal...") from daytime UV hazard tiers.
+- **Wind Speed**: Combines calculated cardinal wind directions (`N`, `NE`, `E`, `SE`, `S`, `SW`, `W`, `NW`) with numeric speed thresholds.
+

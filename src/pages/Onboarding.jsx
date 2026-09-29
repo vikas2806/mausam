@@ -71,6 +71,7 @@ export function Onboarding({ onComplete }) {
       label: customLabel.trim(),
       icon: 'Star',
       desc: `Custom: ${customCards.join(', ')}`,
+      searchTerms: customLabel.trim().toLowerCase().split(/\s+/).concat(customCards),
       cards: customCards,
       cardWeights,
       dangerRules: [],

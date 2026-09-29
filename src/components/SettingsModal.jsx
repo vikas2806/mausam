@@ -74,6 +74,7 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
       label: builderLabel.trim(),
       icon: 'Star',
       desc: `Custom: ${builderCards.join(', ')}`,
+      searchTerms: builderLabel.trim().toLowerCase().split(/\s+/).concat(builderCards),
       cards: builderCards,
       cardWeights,
       dangerRules: [],

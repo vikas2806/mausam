@@ -4,6 +4,7 @@
     "label": "Health-conscious",
     "icon": "HeartPulse",
     "desc": "AQI alerts, pollen count, UV index, humidity insights",
+    "searchTerms": ["health", "healthy", "asthma", "aqi", "air", "pollen", "allergies", "allergy", "respiratory", "pollution", "smog", "dust", "uv"],
     "cards": ["aqi", "uvIndex", "pollen", "humidity"],
     "cardWeights": { "aqi": 40, "uvIndex": 30, "pollen": 25, "humidity": 20 },
     "dangerRules": [
@@ -18,6 +19,7 @@
     "label": "Outdoor Fitness",
     "icon": "Activity",
     "desc": "Best running hours, wind speed, sunrise & heat index",
+    "searchTerms": ["fitness", "run", "runner", "running", "jog", "jogging", "gym", "workout", "exercise", "marathon", "cycling", "cycle", "athlete", "outdoor"],
     "cards": ["bestRunningHours", "uvIndex", "wind", "sunrise"],
     "cardWeights": { "bestRunningHours": 45, "uvIndex": 25, "wind": 20, "sunrise": 15 },
     "dangerRules": [
@@ -34,6 +36,7 @@
     "label": "Beachgoers & Swimmers",
     "icon": "Waves",
     "desc": "Sea swell height, tide timings, water temperature",
+    "searchTerms": ["beach", "surf", "surfing", "swim", "swimming", "ocean", "sea", "waves", "tide", "coastal", "sand", "sunbath"],
     "cards": ["marine", "uvIndex", "wind"],
     "cardWeights": { "marine": 50, "uvIndex": 25, "wind": 20 },
     "dangerRules": [
@@ -50,6 +53,7 @@
     "label": "Travelers",
     "icon": "Plane",
     "desc": "Destination alerts, flight weather, packing advice",
+    "searchTerms": ["travel", "traveler", "trip", "flight", "fly", "destination", "vacation", "tourist", "pack", "packing", "tour"],
     "cards": ["travelAlerts", "packingSuggestion", "wind"],
     "cardWeights": { "travelAlerts": 45, "packingSuggestion": 30, "wind": 15 },
     "dangerRules": [
@@ -62,6 +66,7 @@
     "label": "Family & Kids",
     "icon": "Users",
     "desc": "School commute weather, severe rain & storm warnings",
+    "searchTerms": ["family", "kids", "children", "school", "parent", "toddler", "home", "commute", "rain"],
     "cards": ["commuteRisk", "rainAlert", "uvIndex"],
     "cardWeights": { "commuteRisk": 40, "rainAlert": 35, "uvIndex": 15 },
     "dangerRules": [
@@ -78,6 +83,7 @@
     "label": "Agriculture & Gardening",
     "icon": "Sprout",
     "desc": "Soil moisture, frost hazards, crop planting guidance",
+    "searchTerms": ["farm", "farmer", "farming", "agriculture", "crop", "crops", "garden", "gardening", "soil", "plants", "harvest", "frost"],
     "cards": ["soilMoisture", "rainAlert", "frostAlert"],
     "cardWeights": { "soilMoisture": 50, "rainAlert": 35, "frostAlert": 40 },
     "dangerRules": [
@@ -90,6 +96,7 @@
     "label": "Daily Commuter",
     "icon": "Car",
     "desc": "Fog visibility, traffic risk, storm alerts, leave-by tips",
+    "searchTerms": ["commute", "commuter", "office", "work", "drive", "driver", "car", "metro", "traffic", "fog", "visibility"],
     "cards": ["commuteRisk", "visibility", "rainAlert"],
     "cardWeights": { "commuteRisk": 45, "visibility": 40, "rainAlert": 30 },
     "dangerRules": [
@@ -106,6 +113,7 @@
     "label": "Outdoor Events",
     "icon": "Calendar",
     "desc": "Extended 7-day forecast, rain chance, outdoor comfort",
+    "searchTerms": ["event", "events", "party", "wedding", "concert", "festival", "picnic", "weekend", "outdoor"],
     "cards": ["comfortIndex", "rainAlert", "wind"],
     "cardWeights": { "comfortIndex": 40, "rainAlert": 35, "wind": 20 },
     "dangerRules": [

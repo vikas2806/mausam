@@ -44,4 +44,18 @@ describe('profileStorage utility', () => {
     expect(getProfile()).toEqual(DEFAULT_PROFILE);
     expect(hasCompletedOnboarding()).toBe(false);
   });
+
+  it('persists selected persona (e.g. default or beach) so onboarding is not re-asked on app open', () => {
+    // 1. Simulate user selecting 'default' persona during onboarding
+    saveProfile({ personas: ['default'], locationId: 'mumbai-01' });
+    setOnboardingCompleted(true);
+
+    // 2. Simulate subsequent app reload — getProfile() and hasCompletedOnboarding() read from storage
+    const loadedProfile = getProfile();
+    const isCompleted = hasCompletedOnboarding();
+
+    expect(isCompleted).toBe(true);
+    expect(loadedProfile.personas).toEqual(['default']);
+    expect(loadedProfile.locationId).toBe('mumbai-01');
+  });
 });

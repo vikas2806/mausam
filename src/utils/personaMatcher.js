@@ -12,8 +12,20 @@ export function matchPersonasByQuery(query, personaList) {
   const cleanQuery = query.trim().toLowerCase();
   if (cleanQuery.length === 0) return [];
 
-  // Tokenize input string into words (alphanumeric only)
-  const tokens = cleanQuery.split(/[^a-z0-9]+/).filter(t => t.length > 1);
+  const STOP_WORDS = new Set([
+    'i', 'me', 'my', 'myself', 'we', 'our', 'a', 'an', 'the', 'is', 'am', 'are', 'was',
+    'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'and',
+    'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for',
+    'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before',
+    'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off',
+    'over', 'under', 'again', 'further', 'then', 'once', 'every', 'all', 'any',
+    'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor',
+    'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just',
+    'should', 'now', 'person', 'people'
+  ]);
+
+  // Tokenize input string into words (alphanumeric only, excluding stop words)
+  const tokens = cleanQuery.split(/[^a-z0-9]+/).filter(t => t.length > 1 && !STOP_WORDS.has(t));
   if (tokens.length === 0) return [];
 
   const results = [];

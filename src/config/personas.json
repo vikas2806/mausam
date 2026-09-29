@@ -1,5 +1,22 @@
 [
   {
+    "id": "default",
+    "label": "Default (Show Everything)",
+    "icon": "LayoutGrid",
+    "desc": "Unfiltered view showing all weather metrics & cards without persona ranking",
+    "searchTerms": ["default", "all", "everything", "unfiltered", "normal", "standard", "full", "show all"],
+    "cards": ["aqi", "uvIndex", "pollen", "humidity", "bestRunningHours", "wind", "sunrise", "marine", "travelAlerts", "packingSuggestion", "commuteRisk", "rainAlert", "soilMoisture", "frostAlert", "visibility", "comfortIndex"],
+    "cardWeights": {
+      "aqi": 10, "uvIndex": 10, "pollen": 10, "humidity": 10,
+      "bestRunningHours": 10, "wind": 10, "sunrise": 10, "marine": 10,
+      "travelAlerts": 10, "packingSuggestion": 10, "commuteRisk": 10,
+      "rainAlert": 10, "soilMoisture": 10, "frostAlert": 10,
+      "visibility": 10, "comfortIndex": 10
+    },
+    "dangerRules": [],
+    "timeRules": []
+  },
+  {
     "id": "health",
     "label": "Health-conscious",
     "icon": "HeartPulse",

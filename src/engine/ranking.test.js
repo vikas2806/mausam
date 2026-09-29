@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import PERSONAS from '../config/personas.json';
 import {
   scoreCard,
   rankCards,
@@ -279,6 +280,17 @@ describe('rankCards', () => {
 
   it('returns empty array for empty personas list', () => {
     expect(rankCards([], baseWeather, 10, registry)).toHaveLength(0);
+  });
+
+  it('ranks all available cards when Default (show everything) persona is selected', () => {
+    const defaultPersona = PERSONAS.find(p => p.id === 'default');
+    const testRegistry = [...registry, defaultPersona];
+    const ranked = rankCards(['default'], baseWeather, 10, testRegistry);
+    expect(ranked.length).toBeGreaterThan(5);
+    const availableCardIds = ranked.filter(r => r.isAvailable).map(r => r.cardId);
+    expect(availableCardIds).toContain('uvIndex');
+    expect(availableCardIds).toContain('humidity');
+    expect(availableCardIds).toContain('wind');
   });
 
   // ── NEW TEST: brand-new persona, zero engine changes required ──────────────

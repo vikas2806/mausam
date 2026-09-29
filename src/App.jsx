@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getWeatherProvider } from './data/RealWeatherProvider';
+import { getWeatherProvider } from './providers/factory';
 import { DevComponentsPreview } from './pages/DevComponentsPreview';
 import { Onboarding } from './pages/Onboarding';
 import { Homepage } from './pages/Homepage';
@@ -9,7 +9,7 @@ import { Skeleton } from './components/Skeleton';
 import { getProfile, hasCompletedOnboarding } from './utils/profileStorage';
 import './styles/components.css';
 
-const provider = getWeatherProvider(true);
+const provider = getWeatherProvider();
 
 export default function App() {
   const { i18n } = useTranslation();

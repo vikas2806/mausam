@@ -8,8 +8,8 @@ describe('RealWeatherProvider & Provider Factory', () => {
     vi.restoreAllMocks();
   });
 
-  it('getWeatherProvider returns RealWeatherProvider when useReal is true', () => {
-    const provider = getWeatherProvider(true);
+  it('getWeatherProvider returns RealWeatherProvider when "open-meteo" option is passed', () => {
+    const provider = getWeatherProvider('open-meteo');
     expect(provider).toBeInstanceOf(RealWeatherProvider);
   });
 

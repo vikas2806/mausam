@@ -250,11 +250,13 @@ export class RealWeatherProvider extends WeatherDataProvider {
   }
 }
 
+import { getWeatherProvider as centralGetWeatherProvider } from '../providers/factory';
+
 /**
- * Provider Factory function.
- * @param {boolean} [useReal=true]
+ * Provider Factory function for backward-compatibility.
+ * @param {boolean|string} [useReal]
  * @returns {WeatherDataProvider}
  */
-export function getWeatherProvider(useReal = true) {
-  return useReal ? new RealWeatherProvider() : new MockWeatherProvider();
+export function getWeatherProvider(useReal) {
+  return centralGetWeatherProvider(useReal);
 }

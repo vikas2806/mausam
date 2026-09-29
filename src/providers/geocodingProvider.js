@@ -81,3 +81,55 @@ export async function searchLocations(query, apiKey = getApiKey()) {
     }));
   }
 }
+
+/**
+ * Reverse geocode a lat/lon coordinate pair into a named location object.
+ * Uses OpenWeatherMap's /geo/1.0/reverse endpoint, with a nearest-mock-city fallback.
+ * @param {number} lat
+ * @param {number} lon
+ * @param {string} [apiKey]
+ * @returns {Promise<{id: string, name: string, state: string, country: string, lat: number, lon: number, displayName: string}>}
+ */
+export async function reverseGeocode(lat, lon, apiKey = getApiKey()) {
+  const useMock = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ENABLE_MOCK_DATA === 'true') || !apiKey;
+
+  if (!useMock) {
+    try {
+      const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Reverse geocode API error ${res.status}`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const item = data[0];
+        return {
+          id: `rev-${lat.toFixed(4)}-${lon.toFixed(4)}`,
+          name: item.name,
+          state: item.state || '',
+          country: item.country || '',
+          lat,
+          lon,
+          displayName: `${item.name}${item.state ? ', ' + item.state : ''}${item.country ? ', ' + item.country : ''}`,
+        };
+      }
+    } catch (err) {
+      console.warn(`[geocodingProvider] Reverse geocode failed (${err.message}). Falling back to nearest mock.`);
+    }
+  }
+
+  // Fallback: find nearest city in mock list by straight-line distance
+  let nearest = EXPANDED_MOCK_LOCATIONS[0];
+  let minDist = Infinity;
+  for (const loc of EXPANDED_MOCK_LOCATIONS) {
+    const dist = Math.sqrt((loc.lat - lat) ** 2 + (loc.lon - lon) ** 2);
+    if (dist < minDist) { minDist = dist; nearest = loc; }
+  }
+  return {
+    id: nearest.id,
+    name: nearest.name,
+    state: nearest.state,
+    country: nearest.country,
+    lat: nearest.lat,
+    lon: nearest.lon,
+    displayName: `${nearest.name}${nearest.state ? ', ' + nearest.state : ''}, ${nearest.country}`,
+  };
+}

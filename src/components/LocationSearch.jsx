@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Loader2, X } from 'lucide-react';
-import { searchLocations } from '../providers/geocodingProvider';
+import { Search, MapPin, Loader2, X, Navigation } from 'lucide-react';
+import { searchLocations, reverseGeocode } from '../providers/geocodingProvider';
 
 /**
  * Debounced Location Search Input component.
  * Calls searchLocations after typing stops (300ms delay) and renders matching dropdown results.
+ * Includes a "Use my current location" option via navigator.geolocation.
  *
  * @param {object} props
  * @param {object} [props.selectedLocation] - Currently active location object {id, name, state, country, lat, lon, displayName}
@@ -16,6 +17,8 @@ export function LocationSearch({ selectedLocation, onSelectLocation, placeholder
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState(null);
   const dropdownRef = useRef(null);
 
   // Sync internal query when selectedLocation prop updates
@@ -77,7 +80,68 @@ export function LocationSearch({ selectedLocation, onSelectLocation, placeholder
     setQuery('');
     setResults([]);
     setIsOpen(false);
+    setGeoError(null);
   };
+
+  /** Trigger browser geolocation, then reverse-geocode the coords into a location object */
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      setGeoError('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setGeoLoading(true);
+    setGeoError(null);
+    setIsOpen(false);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const loc = await reverseGeocode(latitude, longitude);
+          setQuery(loc.displayName);
+          setGeoError(null);
+          onSelectLocation(loc);
+        } catch (err) {
+          console.error('Reverse geocode error:', err);
+          // Fallback: construct a minimal location from raw coords
+          const fallback = {
+            id: `geo_${latitude.toFixed(4)}_${longitude.toFixed(4)}`,
+            name: 'My Location',
+            state: '',
+            country: '',
+            lat: latitude,
+            lon: longitude,
+            displayName: `My Location (${latitude.toFixed(2)}°N, ${longitude.toFixed(2)}°E)`,
+          };
+          setQuery(fallback.displayName);
+          setGeoError(null);
+          onSelectLocation(fallback);
+        } finally {
+          setGeoLoading(false);
+        }
+      },
+      (err) => {
+        setGeoLoading(false);
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            setGeoError('Location access denied. Please allow location in browser settings.');
+            break;
+          case err.POSITION_UNAVAILABLE:
+            setGeoError('Location unavailable. Try again or search manually.');
+            break;
+          case err.TIMEOUT:
+            setGeoError('Location request timed out. Try again.');
+            break;
+          default:
+            setGeoError('Could not get location. Try again.');
+        }
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
+  const showDropdown = isOpen && (results.length > 0 || true); // always show when open for geo button
 
   return (
     <div className="location-search-container" ref={dropdownRef} style={{ position: 'relative', width: '100%' }}>
@@ -89,8 +153,9 @@ export function LocationSearch({ selectedLocation, onSelectLocation, placeholder
           onChange={(e) => {
             setQuery(e.target.value);
             setIsOpen(true);
+            setGeoError(null);
           }}
-          onFocus={() => { if (results.length > 0) setIsOpen(true); }}
+          onFocus={() => { setIsOpen(true); }}
           placeholder={placeholder}
           className="location-search-input"
           style={{
@@ -104,7 +169,7 @@ export function LocationSearch({ selectedLocation, onSelectLocation, placeholder
             outline: 'none'
           }}
         />
-        {loading ? (
+        {(loading || geoLoading) ? (
           <Loader2 size={16} className="spin-animation" style={{ position: 'absolute', right: '12px', color: 'var(--text-secondary, #94a3b8)' }} />
         ) : query ? (
           <button
@@ -117,8 +182,15 @@ export function LocationSearch({ selectedLocation, onSelectLocation, placeholder
         ) : null}
       </div>
 
+      {/* Geolocation error message */}
+      {geoError && (
+        <p style={{ margin: '6px 2px 0', fontSize: '0.8rem', color: 'var(--error-color, #f87171)' }}>
+          {geoError}
+        </p>
+      )}
+
       {/* Results Dropdown */}
-      {isOpen && results.length > 0 && (
+      {isOpen && (
         <ul
           className="location-search-dropdown glass-card"
           style={{
@@ -127,7 +199,7 @@ export function LocationSearch({ selectedLocation, onSelectLocation, placeholder
             left: 0,
             right: 0,
             zIndex: 1000,
-            maxHeight: '240px',
+            maxHeight: '280px',
             overflowY: 'auto',
             borderRadius: '12px',
             background: 'var(--bg-card, rgba(15, 23, 42, 0.95))',
@@ -138,6 +210,34 @@ export function LocationSearch({ selectedLocation, onSelectLocation, placeholder
             padding: '6px 0'
           }}
         >
+          {/* "Use my current location" — always shown at the top */}
+          <li
+            onClick={handleUseMyLocation}
+            style={{
+              padding: '10px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              cursor: geoLoading ? 'wait' : 'pointer',
+              transition: 'background 0.2s',
+              color: 'var(--accent-color, #38bdf8)',
+              fontSize: '0.9rem',
+              borderBottom: results.length > 0 ? '1px solid var(--border-color, rgba(255,255,255,0.1))' : 'none',
+              fontWeight: 500,
+              opacity: geoLoading ? 0.7 : 1,
+            }}
+            onMouseEnter={(e) => { if (!geoLoading) e.currentTarget.style.background = 'rgba(56,189,248,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            {geoLoading ? (
+              <Loader2 size={16} className="spin-animation" style={{ flexShrink: 0 }} />
+            ) : (
+              <Navigation size={16} style={{ flexShrink: 0 }} />
+            )}
+            <span>{geoLoading ? 'Detecting your location…' : 'Use my current location'}</span>
+          </li>
+
+          {/* Search results */}
           {results.map((loc) => (
             <li
               key={loc.id}

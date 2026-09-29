@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import * as Icons from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getProfile, saveProfile, resetProfile, getCustomPersonas, saveCustomPersona, deleteCustomPersona } from '../utils/profileStorage';
+import { matchPersonasByQuery } from '../utils/personaMatcher';
 import PERSONAS from '../config/personas.json';
 import CARD_CONFIG from '../config/cardConfig.json';
 
@@ -26,8 +27,31 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
   const [builderCards, setBuilderCards] = useState([]);
   const [builderError, setBuilderError] = useState('');
 
+  // Natural-language persona search state
+  const [personaQuery, setPersonaQuery] = useState('');
+  const [personaSuggestions, setPersonaSuggestions] = useState(null); // null = not searched yet
+  const [searchError, setSearchError] = useState('');
+
   // All personas = built-in + custom
   const allPersonas = [...PERSONAS, ...customPersonas];
+
+  const handlePersonaSearch = (e) => {
+    e.preventDefault();
+    const q = personaQuery.trim();
+    if (!q) { setSearchError('Please describe yourself first.'); return; }
+    setSearchError('');
+    const matches = matchPersonasByQuery(q, allPersonas);
+    setPersonaSuggestions(matches);
+  };
+
+  // Confirm a suggestion chip → full replacement of persona set
+  const confirmSuggestion = (personaId) => {
+    const nextProfile = saveProfile({ personas: [personaId] });
+    setProfileState(nextProfile);
+    if (onProfileUpdated) onProfileUpdated(nextProfile);
+    setPersonaSuggestions(null);
+    setPersonaQuery('');
+  };
 
   const togglePersona = (id) => {
     const current = profile.personas || [];
@@ -154,9 +178,96 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
         {/* Active Personas — loops over personas.json + custom, no hardcoded list */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ fontSize: '0.8rem', opacity: 0.8, display: 'block', marginBottom: '8px' }}>
-            Active Personas (Multi-Select)
+            Active Personas
           </label>
+
+          {/* Natural-language search */}
+          <form onSubmit={handlePersonaSearch} style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+            <input
+              type="text"
+              value={personaQuery}
+              onChange={e => { setPersonaQuery(e.target.value); setPersonaSuggestions(null); setSearchError(''); }}
+              placeholder="e.g. 'I run every morning' or 'I love the beach'"
+              style={{
+                flex: 1,
+                padding: '7px 10px',
+                borderRadius: '8px',
+                background: 'rgba(255,255,255,0.1)',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.2)',
+                fontSize: '0.78rem',
+                outline: 'none'
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: '7px 12px',
+                borderRadius: '8px',
+                background: 'rgba(255,255,255,0.18)',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.25)',
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Icons.Search size={13} />
+            </button>
+          </form>
+
+          {searchError && (
+            <div style={{ color: '#ff6b6b', fontSize: '0.75rem', marginBottom: '8px' }}>{searchError}</div>
+          )}
+
+          {/* Suggestion chips (replaces full persona set on confirm) */}
+          {personaSuggestions !== null && (
+            <div style={{ marginBottom: '10px' }}>
+              {personaSuggestions.length > 0 ? (
+                <>
+                  <div style={{ fontSize: '0.72rem', opacity: 0.7, marginBottom: '6px' }}>
+                    Best matches — tap to switch:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {personaSuggestions.slice(0, 4).map(p => {
+                      const IconComp = Icons[p.icon] || Icons.User;
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => confirmSuggestion(p.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            padding: '5px 10px',
+                            borderRadius: '20px',
+                            border: '1px solid rgba(255,255,255,0.4)',
+                            background: 'rgba(255,255,255,0.12)',
+                            color: '#fff',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <IconComp size={12} />
+                          {p.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '6px' }}>
+                  No strong match found — pick from the list below or build your own.
+                </div>
+              )}
+            </div>
+          )}
+
+          <div style={{ fontSize: '0.72rem', opacity: 0.6, marginBottom: '6px' }}>
+            Or toggle manually (multi-select):
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+
             {allPersonas.map((persona) => {
               const isActive = (profile.personas || []).includes(persona.id);
               const isCustom = customPersonas.some(cp => cp.id === persona.id);

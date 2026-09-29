@@ -9,8 +9,6 @@ import { Skeleton } from './components/Skeleton';
 import { getProfile, hasCompletedOnboarding } from './utils/profileStorage';
 import './styles/components.css';
 
-const provider = getWeatherProvider();
-
 export default function App() {
   const { i18n } = useTranslation();
   const [profile, setProfile] = useState(getProfile());
@@ -25,6 +23,7 @@ export default function App() {
   useEffect(() => {
     if (!completedOnboarding) return;
     setLoading(true);
+    const provider = getWeatherProvider();
     provider.getWeatherData(profile.locationId).then(data => {
       setWeatherData(data);
       setLoading(false);

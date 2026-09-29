@@ -109,8 +109,10 @@ export class OpenWeatherProvider extends WeatherDataProvider {
     const cacheKey = `${CACHE_PREFIX}${locationId}`;
     const cached = this._getCachedData(cacheKey);
     if (cached) {
+      console.log('[OpenWeatherProvider] Serving cached data for:', locationId, cached);
       return cached;
     }
+    console.log('[OpenWeatherProvider] Cache miss. Fetching live OpenWeatherMap API data for:', locationId);
 
     // Resolve lat/lon from mock location table or defaults
     const mockLocations = await this.mockFallback.searchLocations('');

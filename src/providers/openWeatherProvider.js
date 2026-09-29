@@ -37,11 +37,61 @@ export function getApiKey() {
   return '';
 }
 
+const CACHE_PREFIX = 'owm_cache_';
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes TTL
+
 export class OpenWeatherProvider extends WeatherDataProvider {
   constructor(apiKey = getApiKey()) {
     super();
     this.apiKey = apiKey;
     this.mockFallback = new MockWeatherProvider();
+    this._inMemoryCache = new Map();
+  }
+
+  /**
+   * Get non-expired cached data from memory or localStorage.
+   * @param {string} cacheKey
+   */
+  _getCachedData(cacheKey) {
+    // 1. Check in-memory cache
+    const memEntry = this._inMemoryCache.get(cacheKey);
+    if (memEntry && (Date.now() - memEntry.timestamp < CACHE_TTL_MS)) {
+      return memEntry.data;
+    }
+
+    // 2. Check localStorage cache
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem(cacheKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Date.now() - parsed.timestamp < CACHE_TTL_MS) {
+            this._inMemoryCache.set(cacheKey, parsed);
+            return parsed.data;
+          }
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    return null;
+  }
+
+  /**
+   * Save data to both in-memory cache and localStorage.
+   * @param {string} cacheKey
+   * @param {object} data
+   */
+  _setCachedData(cacheKey, data) {
+    const entry = { timestamp: Date.now(), data };
+    this._inMemoryCache.set(cacheKey, entry);
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(cacheKey, JSON.stringify(entry));
+      }
+    } catch {
+      // Ignore quota errors
+    }
   }
 
   /**
@@ -54,6 +104,12 @@ export class OpenWeatherProvider extends WeatherDataProvider {
     if (!key) {
       console.warn('[OpenWeatherProvider] No API key found. Falling back to MockWeatherProvider.');
       return this.mockFallback.getWeatherData(locationId);
+    }
+
+    const cacheKey = `${CACHE_PREFIX}${locationId}`;
+    const cached = this._getCachedData(cacheKey);
+    if (cached) {
+      return cached;
     }
 
     // Resolve lat/lon from mock location table or defaults
@@ -81,7 +137,9 @@ export class OpenWeatherProvider extends WeatherDataProvider {
       const forecastJson = forecastRes.ok ? await forecastRes.json() : { list: [] };
       const pollutionJson = pollutionRes && pollutionRes.ok ? await pollutionRes.json() : null;
 
-      return this._normalizeData(targetLoc, weatherJson, forecastJson, pollutionJson);
+      const normalized = this._normalizeData(targetLoc, weatherJson, forecastJson, pollutionJson);
+      this._setCachedData(cacheKey, normalized);
+      return normalized;
     } catch (err) {
       console.warn(`[OpenWeatherProvider] Fetch failed (${err.message}). Falling back to MockWeatherProvider.`);
       return this.mockFallback.getWeatherData(locationId);

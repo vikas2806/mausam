@@ -68,4 +68,27 @@ describe('OpenWeatherProvider', () => {
     expect(data).toBeDefined();
     expect(data.location).toBeDefined();
   });
+
+  it('serves unexpired data from cache without re-fetching network APIs', async () => {
+    const mockWeather = {
+      name: 'Noida',
+      main: { temp: 30, humidity: 50 },
+      weather: [{ main: 'Clear' }]
+    };
+    const fetchSpy = vi.fn((url) => {
+      if (url.includes('/weather')) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockWeather) });
+      if (url.includes('/forecast')) return Promise.resolve({ ok: true, json: () => Promise.resolve({ list: [] }) });
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ list: [] }) });
+    });
+    global.fetch = fetchSpy;
+
+    // First call triggers network fetch
+    const data1 = await provider.getWeatherData('mumbai-01');
+    const firstCallCount = fetchSpy.mock.calls.length;
+
+    // Second call for same location within TTL returns cached result without additional fetch calls
+    const data2 = await provider.getWeatherData('mumbai-01');
+    expect(fetchSpy.mock.calls.length).toBe(firstCallCount);
+    expect(data2.current.temperature).toBe(data1.current.temperature);
+  });
 });

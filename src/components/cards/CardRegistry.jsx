@@ -199,6 +199,20 @@ export function renderCard(cardId, weatherData, onFeedback) {
     }
 
     case 'sunrise': {
+      const aqi = airQuality?.aqi;
+      const humidity = current.humidity;
+      const temp = current.temperature;
+      
+      const severeFactors = [];
+      if (aqi && aqi > 100) severeFactors.push(`poor air quality (${aqi} AQI)`);
+      if (humidity > 75) severeFactors.push(`high humidity (${humidity}%)`);
+      if (temp > 30) severeFactors.push(`high temp (${temp}°C)`);
+
+      let sunriseInsight = `Golden hour starts at ${current.sunrise}. Best light for morning outdoor activities and photography.`;
+      if (severeFactors.length > 0) {
+        sunriseInsight = `Golden hour is at ${current.sunrise}, but ${severeFactors.join(' and ')} present — great light for photography, less ideal for strenuous outdoor exercise.`;
+      }
+
       return (
         <WeatherCard
           key="sunrise"
@@ -209,7 +223,7 @@ export function renderCard(cardId, weatherData, onFeedback) {
           unit=""
           badgeText={`Sunset ${current.sunset}`}
           badgeSeverity="Green"
-          insight={`Golden hour starts at ${current.sunrise}. Best light for morning outdoor activities and photography.`}
+          insight={sunriseInsight}
           onFeedback={onFeedback}
         />
       );

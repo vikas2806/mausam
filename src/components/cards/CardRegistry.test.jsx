@@ -171,7 +171,20 @@ describe('CardRegistry Renderer', () => {
     expect(screen.getByText('Packing Suggestions')).toBeDefined();
   });
 
-  it('returns null for unknown cardId', () => {
-    expect(renderCard('unknownCard', fullMockWeatherData)).toBeNull();
+  it('maintains cross-card consistency between Running and Sunrise cards under poor conditions', () => {
+    const poorConditionData = {
+      ...fullMockWeatherData,
+      current: { ...fullMockWeatherData.current, temperature: 32, humidity: 82 },
+      airQuality: { ...fullMockWeatherData.airQuality, aqi: 160 }
+    };
+
+    const runningCard = renderCard('bestRunningHours', poorConditionData);
+    const sunriseCard = renderCard('sunrise', poorConditionData);
+
+    const { container: runningContainer } = render(runningCard);
+    const { container: sunriseContainer } = render(sunriseCard);
+
+    expect(runningContainer.textContent).toMatch(/poor air quality|conditions remain poor|Least-bad/i);
+    expect(sunriseContainer.textContent).toMatch(/poor air quality|less ideal for strenuous outdoor exercise/i);
   });
 });

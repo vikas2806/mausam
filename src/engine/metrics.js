@@ -47,11 +47,16 @@ function scoreRunningWindow(window, currentTemp, aqi, humidity, uvIndex) {
   return Math.max(0, Math.min(100, tempScore + aqiScore - humidityPenalty - uvPenalty));
 }
 
+export const RUNNING_SCORE_THRESHOLDS = {
+  EXCELLENT: 70,
+  ACCEPTABLE: 45
+};
+
 /**
  * Determine the best 2-hour running window given current weather data.
  *
  * @param {import('../data/types').NormalizedWeatherData} weatherData
- * @returns {{ window: string, score: number, tip: string }}
+ * @returns {{ window: string, score: number, tip: string, displayLabel?: string }}
  */
 export function bestRunningHours(weatherData) {
   const { current, airQuality } = weatherData;
@@ -81,17 +86,20 @@ export function bestRunningHours(weatherData) {
   if (airQuality && aqi > 100) limitingFactors.push(`poor air quality (${aqi} AQI)`);
 
   let tip;
-  if (score >= 70) {
+  let displayLabel = bestWindow.label;
+
+  if (score >= RUNNING_SCORE_THRESHOLDS.EXCELLENT) {
     tip = `${bestWindow.label} is ideal today — pleasant temperature (${temp}°C) and comfortable conditions.`;
-  } else if (score >= 45) {
+  } else if (score >= RUNNING_SCORE_THRESHOLDS.ACCEPTABLE) {
     const factorMsg = limitingFactors.length > 0 ? ` due to ${limitingFactors.join(' and ')}` : '';
     tip = `${bestWindow.label} is your best option${factorMsg}. Stay hydrated during your run.`;
   } else {
+    displayLabel = `Least-bad: ${bestWindow.label}`;
     const factorMsg = limitingFactors.length > 0 ? ` driven by ${limitingFactors.join(' and ')}` : ' due to overall warm conditions';
-    tip = `Conditions are poor for running during ${bestWindow.label}${factorMsg}. Consider indoor workouts.`;
+    tip = `Least-bad window: ${bestWindow.label} (conditions remain poor${factorMsg}). Consider indoor workouts instead.`;
   }
 
-  return { window: bestWindow.label, score, tip };
+  return { window: displayLabel, rawWindow: bestWindow.label, score, tip };
 }
 
 // ── 2. COMFORT INDEX ──────────────────────────────────────────────────────

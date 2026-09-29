@@ -268,16 +268,18 @@
   margin: 8px 16px;
 }
 
-/* ── RESPONSIVE DASHBOARD LAYOUT FOR LAPTOP & MOBILE ────────────────────── */
+/* ── RESPONSIVE DASHBOARD LAYOUT FOR ALL DEVICES ───────────────────────── */
 .homepage-main-container {
   display: flex;
   flex-direction: column;
   flex: 1;
+  width: 100%;
 }
 
 .homepage-left-col,
 .homepage-right-col {
   padding: 0 16px;
+  width: 100%;
 }
 
 .cards-grid {
@@ -286,22 +288,32 @@
   gap: 14px;
 }
 
+/* Tablet (600px - 1023px) */
 @media (min-width: 600px) {
+  .homepage-header {
+    padding: 18px 24px 10px;
+  }
+  .homepage-left-col,
+  .homepage-right-col {
+    padding: 0 24px;
+  }
   .cards-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
 }
 
+/* Laptop (1024px - 1399px) */
 @media (min-width: 1024px) {
   .homepage-header {
-    padding: 20px 32px 14px;
+    padding: 20px 40px 14px;
   }
 
   .homepage-main-container {
     display: grid;
-    grid-template-columns: 380px 1fr;
-    gap: 32px;
-    padding: 0 32px 32px;
+    grid-template-columns: 360px 1fr;
+    gap: 28px;
+    padding: 0 40px 32px;
     align-items: start;
   }
 
@@ -325,7 +337,7 @@
     bottom: 20px;
     margin: 20px auto 24px;
     width: max-content;
-    max-width: 900px;
+    max-width: 90%;
     padding: 10px 24px 12px;
     border-radius: 30px;
     background: rgba(12, 20, 32, 0.85);
@@ -337,15 +349,38 @@
   }
 }
 
-@media (min-width: 1360px) {
+/* Large Laptop / Desktop (1400px - 1799px) */
+@media (min-width: 1400px) {
+  .homepage-header {
+    padding: 24px 56px 16px;
+  }
+
   .homepage-main-container {
-    grid-template-columns: 420px 1fr;
+    grid-template-columns: 400px 1fr;
     gap: 36px;
-    padding: 0 40px 40px;
+    padding: 0 56px 40px;
   }
 
   .cards-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
+  }
+}
+
+/* Ultra-wide Desktop (1800px+) */
+@media (min-width: 1800px) {
+  .homepage-header {
+    padding: 28px 80px 18px;
+  }
+
+  .homepage-main-container {
+    grid-template-columns: 440px 1fr;
+    gap: 44px;
+    padding: 0 80px 48px;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
   }
 }

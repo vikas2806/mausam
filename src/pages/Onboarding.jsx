@@ -5,6 +5,8 @@ import { saveProfile, setOnboardingCompleted } from '../utils/profileStorage';
 import PERSONAS from '../config/personas.json';
 import CARD_CONFIG from '../config/cardConfig.json';
 
+import { matchPersonasByQuery } from '../utils/personaMatcher';
+
 const MOCK_LOCATIONS = [
   { id: 'noida-01', name: 'Sector 2, Noida (Delhi NCR)' },
   { id: 'mumbai-01', name: 'Marine Drive, Mumbai' },
@@ -25,11 +27,14 @@ export function Onboarding({ onComplete }) {
   const [step, setStep] = useState(1);
   const [selectedPersonas, setSelectedPersonas] = useState(['health', 'commute']);
   const [locationId, setLocationId] = useState('noida-01');
+  const [searchQuery, setSearchQuery] = useState('');
   const [healthInputs, setHealthInputs] = useState({
     respiratorySensitivity: false,
     outdoorRunner: false,
     dailyCommuter: true
   });
+
+  const matchedSuggestions = matchPersonasByQuery(searchQuery, PERSONAS);
 
   // "Build your own" persona state
   const [showBuildOwn, setShowBuildOwn] = useState(false);
@@ -157,6 +162,72 @@ export function Onboarding({ onComplete }) {
           <p style={{ fontSize: '0.8rem', opacity: 0.8, marginBottom: '12px' }}>
             Select one or multiple profiles (multi-select supported):
           </p>
+
+          {/* Natural language persona description / search input */}
+          <div style={{ marginBottom: '14px' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+              Describe yourself (e.g. "I'm a beach person" or "I run every morning"):
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Type how you live, work, or move..."
+                style={{
+                  width: '100%',
+                  padding: '10px 12px 10px 36px',
+                  borderRadius: '12px',
+                  background: 'rgba(255,255,255,0.18)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255,255,255,0.35)',
+                  fontSize: '0.85rem',
+                  outline: 'none'
+                }}
+              />
+              <Icons.Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.7 }} />
+            </div>
+          </div>
+
+          {/* Suggested persona chips based on keyword match (requires user tap to confirm) */}
+          {matchedSuggestions.length > 0 && (
+            <div style={{ marginBottom: '14px', background: 'rgba(255,255,255,0.1)', padding: '10px', borderRadius: '12px' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Matching Persona Suggestions (Tap chip to confirm):
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {matchedSuggestions.map(persona => {
+                  const isSelected = selectedPersonas.includes(persona.id);
+                  const IconComp = Icons[persona.icon] || Icons.User;
+                  return (
+                    <button
+                      key={persona.id}
+                      type="button"
+                      onClick={() => togglePersona(persona.id)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '9999px',
+                        border: '1px solid',
+                        borderColor: isSelected ? '#ffffff' : 'rgba(255,255,255,0.3)',
+                        background: isSelected ? '#ffffff' : 'rgba(255,255,255,0.2)',
+                        color: isSelected ? '#004b93' : '#ffffff',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <IconComp size={14} />
+                      <span>{persona.label}</span>
+                      {isSelected ? <Icons.Check size={14} /> : <span style={{ opacity: 0.7, fontSize: '0.7rem' }}>(Confirm)</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Loop over personas.json — no hardcoded list */}
           <div className="onboarding-persona-grid">

@@ -93,7 +93,7 @@ export function Homepage({ weatherData, profile, onOpenSettings }) {
         {/* ── LEFT COLUMN (Hero, Alerts, Forecasts) ────────────────────── */}
         <div className="homepage-left-col">
           {/* Hero Temperature */}
-          <div className="hero-temp-section">
+          <div className="hero-temp-section glass-card">
             <div className="hero-temp-row">
               <div className="hero-condition-icon">
                 {getConditionIcon(current.conditionCode)}
@@ -111,10 +111,25 @@ export function Homepage({ weatherData, profile, onOpenSettings }) {
             </div>
             <div className="hero-condition-row">
               <span>{current.conditionText}</span>
-              <span style={{ opacity: 0.7 }}>💧 {current.humidity}%</span>
             </div>
-            <div style={{ marginTop: '4px', fontSize: '0.82rem', opacity: 0.8 }}>
-              Feels like {current.feelsLike}°c · Wind {current.windSpeed} km/h {current.windDirection}
+
+            <div className="hero-stats-grid">
+              <div className="hero-stat-item">
+                <span className="hero-stat-label">Feels Like</span>
+                <span className="hero-stat-value">{current.feelsLike}°c</span>
+              </div>
+              <div className="hero-stat-item">
+                <span className="hero-stat-label">Wind</span>
+                <span className="hero-stat-value">{current.windSpeed} km/h {current.windDirection}</span>
+              </div>
+              <div className="hero-stat-item">
+                <span className="hero-stat-label">Humidity</span>
+                <span className="hero-stat-value">{current.humidity}%</span>
+              </div>
+              <div className="hero-stat-item">
+                <span className="hero-stat-label">UV Index</span>
+                <span className="hero-stat-value">{current.uvIndex} / 12</span>
+              </div>
             </div>
           </div>
 

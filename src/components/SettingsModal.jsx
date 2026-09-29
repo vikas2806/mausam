@@ -64,14 +64,7 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
       justifyContent: 'center',
       padding: '16px'
     }}>
-      <div className="glass-card" style={{
-        width: '100%',
-        maxWidth: '360px',
-        padding: '20px',
-        background: '#1c2431',
-        maxHeight: '90vh',
-        overflowY: 'auto'
-      }}>
+      <div className="settings-modal-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Settings & Preferences</h3>
           <button onClick={onClose} className="tap-target" style={{ width: '32px', height: '32px' }}>

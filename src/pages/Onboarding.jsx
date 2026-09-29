@@ -62,7 +62,7 @@ export function Onboarding({ onComplete }) {
   };
 
   return (
-    <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+    <div className="onboarding-container">
       {/* Header Badge */}
       <div style={{ textAlign: 'center', marginTop: '12px' }}>
         <div style={{
@@ -119,7 +119,7 @@ export function Onboarding({ onComplete }) {
             Select one or multiple profiles (multi-select supported):
           </p>
 
-          <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="onboarding-persona-grid">
             {PERSONA_OPTIONS.map((item) => {
               const IconComp = item.icon;
               const isSelected = selectedPersonas.includes(item.id);

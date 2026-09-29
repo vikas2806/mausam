@@ -3,9 +3,17 @@
 /* Weather Card */
 .weather-card {
   position: relative;
-  padding: 16px;
+  padding: 18px;
   margin-bottom: 14px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .weather-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
 }
 
 .weather-card:active {
@@ -250,4 +258,52 @@
   font-size: 0.8rem;
   margin-top: 4px;
   opacity: 0.75;
+}
+
+/* ── ONBOARDING RESPONSIVE LAYOUT ─────────────────────────────────────── */
+.onboarding-container {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  justify-content: space-between;
+}
+
+.onboarding-persona-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+@media (min-width: 640px) {
+  .onboarding-persona-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+/* ── SETTINGS MODAL RESPONSIVE STYLES ──────────────────────────────────── */
+.settings-modal-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 24px;
+  background: #18212e;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: modalScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }

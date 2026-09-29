@@ -24,11 +24,12 @@ export default function App() {
     if (!completedOnboarding) return;
     setLoading(true);
     const provider = getWeatherProvider();
-    provider.getWeatherData(profile.locationId).then(data => {
+    const locParam = profile.location || profile.locationId;
+    provider.getWeatherData(locParam).then(data => {
       setWeatherData(data);
       setLoading(false);
     });
-  }, [profile.locationId, completedOnboarding]);
+  }, [profile.location, profile.locationId, completedOnboarding]);
 
   const handleOnboardingComplete = () => {
     setProfile(getProfile());

@@ -96,14 +96,17 @@ export class OpenWeatherProvider extends WeatherDataProvider {
 
   /**
    * Fetch normalized weather data using OpenWeatherMap REST APIs.
-   * @param {string} locationId
+   * @param {string|object} locationParam - Location ID string or location object {id, name, state, country, lat, lon, displayName}
    * @returns {Promise<import('../data/types').NormalizedWeatherData>}
    */
-  async getWeatherData(locationId) {
+  async getWeatherData(locationParam) {
     const key = this.apiKey || getApiKey();
+    const locObj = typeof locationParam === 'object' && locationParam !== null ? locationParam : null;
+    const locationId = locObj ? locObj.id : (locationParam || 'noida-01');
+
     if (!key) {
       console.warn('[OpenWeatherProvider] No API key found. Falling back to MockWeatherProvider.');
-      return this.mockFallback.getWeatherData(locationId);
+      return this.mockFallback.getWeatherData(locationParam);
     }
 
     const cacheKey = `${CACHE_PREFIX}${locationId}`;
@@ -114,11 +117,15 @@ export class OpenWeatherProvider extends WeatherDataProvider {
     }
     console.log('[OpenWeatherProvider] Cache miss. Fetching live OpenWeatherMap API data for:', locationId);
 
-    // Resolve lat/lon from mock location table or defaults
-    const mockLocations = await this.mockFallback.searchLocations('');
-    const targetLoc = mockLocations.find(l => l.id === locationId) || mockLocations[0];
-    const lat = targetLoc.lat || 28.61;
-    const lon = targetLoc.lon || 77.20;
+    // Resolve lat/lon from location object, mock location table, or defaults
+    let targetLoc = locObj;
+    if (!targetLoc) {
+      const mockLocations = await this.mockFallback.searchLocations('');
+      targetLoc = mockLocations.find(l => l.id === locationId) || { id: locationId, name: locationId, lat: 28.61, lon: 77.20 };
+    }
+
+    const lat = targetLoc.lat ?? 28.61;
+    const lon = targetLoc.lon ?? 77.20;
 
     const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${key}`;
     const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${key}`;

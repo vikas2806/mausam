@@ -67,10 +67,13 @@ export class RealWeatherProvider extends WeatherDataProvider {
 
   /**
    * Fetch real weather data from Open-Meteo REST APIs with offline fallback.
-   * @param {string} locationId
+   * @param {string|object} locationParam
    * @returns {Promise<import('./types').NormalizedWeatherData>}
    */
-  async getWeatherData(locationId) {
+  async getWeatherData(locationParam) {
+    const locObj = typeof locationParam === 'object' && locationParam !== null ? locationParam : null;
+    const locationId = locObj ? locObj.id : (locationParam || 'noida-01');
+
     const cacheKey = `${CACHE_PREFIX}${locationId}`;
     const cached = this._getCachedData(cacheKey);
     if (cached) {
@@ -78,11 +81,13 @@ export class RealWeatherProvider extends WeatherDataProvider {
     }
 
     try {
-      // Resolve coordinates from mock database or location id
-      const mockLocations = await this.mockFallback.searchLocations('');
-      const targetLoc = mockLocations.find(l => l.id === locationId) || mockLocations[0];
-      const lat = targetLoc.lat || 28.61;
-      const lon = targetLoc.lon || 77.20;
+      let targetLoc = locObj;
+      if (!targetLoc) {
+        const mockLocations = await this.mockFallback.searchLocations('');
+        targetLoc = mockLocations.find(l => l.id === locationId) || { id: locationId, name: locationId, lat: 28.61, lon: 77.20 };
+      }
+      const lat = targetLoc.lat ?? 28.61;
+      const lon = targetLoc.lon ?? 77.20;
 
       const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_probability_max&timezone=auto`;
       const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,us_aqi`;

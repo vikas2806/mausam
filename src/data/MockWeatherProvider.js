@@ -274,10 +274,24 @@ const MOCK_WEATHER_DATABASE = {
 };
 
 export class MockWeatherProvider extends WeatherDataProvider {
-  async getWeatherData(locationId) {
+  async getWeatherData(locationParam) {
+    const locObj = typeof locationParam === 'object' && locationParam !== null ? locationParam : null;
+    const locationId = locObj ? locObj.id : (locationParam || 'noida-01');
+
     // Return requested location or default to Noida if not found
     const data = MOCK_WEATHER_DATABASE[locationId] || MOCK_WEATHER_DATABASE['noida-01'];
-    return JSON.parse(JSON.stringify(data));
+    const cloned = JSON.parse(JSON.stringify(data));
+    if (locObj) {
+      cloned.location = {
+        ...cloned.location,
+        id: locObj.id,
+        name: locObj.name || locObj.displayName || cloned.location.name,
+        state: locObj.state || cloned.location.state,
+        lat: locObj.lat ?? cloned.location.lat,
+        lon: locObj.lon ?? cloned.location.lon
+      };
+    }
+    return cloned;
   }
 
   async searchLocations(query) {

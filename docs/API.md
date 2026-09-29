@@ -12,6 +12,8 @@ export interface LocationInfo {
   id: string;
   name: string;
   state: string;
+  country?: string;
+  displayName?: string;
   lat: number;
   lon: number;
   isCoastal: boolean;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { LocationSearch } from './LocationSearch';
 import * as Icons from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getProfile, saveProfile, resetProfile, getCustomPersonas, saveCustomPersona, deleteCustomPersona } from '../utils/profileStorage';
@@ -152,27 +152,16 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
         {/* Location Selector */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ fontSize: '0.8rem', opacity: 0.8, display: 'block', marginBottom: '6px' }}>
-            Active Location
+            Active Location (Search City / District)
           </label>
-          <select
-            value={profile.locationId}
-            onChange={(e) => changeLocation(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px',
-              borderRadius: '10px',
-              background: 'rgba(255,255,255,0.1)',
-              color: '#ffffff',
-              border: '1px solid rgba(255,255,255,0.2)',
-              fontSize: '0.85rem'
+          <LocationSearch
+            selectedLocation={profile.location}
+            onSelectLocation={(loc) => {
+              const nextProfile = saveProfile({ locationId: loc.id, location: loc });
+              setProfileState(nextProfile);
+              if (onProfileUpdated) onProfileUpdated(nextProfile);
             }}
-          >
-            {LOCATIONS.map((loc) => (
-              <option key={loc.id} value={loc.id} style={{ background: '#1c2431', color: '#ffffff' }}>
-                {loc.name}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         {/* Active Personas — loops over personas.json + custom, no hardcoded list */}

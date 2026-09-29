@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Icons from 'lucide-react';
-import { saveProfile, setOnboardingCompleted } from '../utils/profileStorage';
+import { LocationSearch } from '../components/LocationSearch';
+import { saveProfile, setOnboardingCompleted, DEFAULT_LOCATION } from '../utils/profileStorage';
 import PERSONAS from '../config/personas.json';
 import CARD_CONFIG from '../config/cardConfig.json';
 
@@ -98,7 +99,8 @@ export function Onboarding({ onComplete }) {
   const handleFinish = () => {
     saveProfile({
       personas: selectedPersonas,
-      locationId,
+      locationId: selectedLocation?.id || locationId,
+      location: selectedLocation || DEFAULT_LOCATION,
       healthInputs
     });
     setOnboardingCompleted(true);
@@ -440,28 +442,15 @@ export function Onboarding({ onComplete }) {
           <div style={{ marginBottom: '20px' }}>
             <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
               <Icons.MapPin size={14} style={{ display: 'inline', marginRight: '4px' }} />
-              Primary City / District
+              Primary City / District (Search)
             </label>
-            <select
-              value={locationId}
-              onChange={(e) => setLocationId(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '12px',
-                background: 'rgba(255,255,255,0.2)',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.4)',
-                fontSize: '0.9rem',
-                outline: 'none'
+            <LocationSearch
+              selectedLocation={selectedLocation}
+              onSelectLocation={(loc) => {
+                setSelectedLocation(loc);
+                setLocationId(loc.id);
               }}
-            >
-              {MOCK_LOCATIONS.map((loc) => (
-                <option key={loc.id} value={loc.id} style={{ background: '#121820', color: '#ffffff' }}>
-                  {loc.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <div className="glass-card" style={{ padding: '16px', marginBottom: '20px' }}>

@@ -23,12 +23,20 @@ export function Homepage({ weatherData, profile, onOpenSettings }) {
   // Merge built-in personas with any custom ones from localStorage
   const allPersonas = [...PERSONAS, ...getCustomPersonas()];
 
-  // Re-rank whenever personas or weather data changes
+  // Sync active personas whenever profile.personas changes (e.g. edited via SettingsModal)
+  useEffect(() => {
+    if (profile?.personas) {
+      setActivePersonas(profile.personas);
+    }
+  }, [profile?.personas]);
+
+  // Re-rank whenever activePersonas, weather data, or custom personas change
   useEffect(() => {
     const currentHour = new Date().getHours();
-    const ranked = rankCards(activePersonas, weatherData, currentHour, allPersonas);
+    const registry = [...PERSONAS, ...getCustomPersonas()];
+    const ranked = rankCards(activePersonas, weatherData, currentHour, registry);
     setRankedCards(ranked);
-  }, [activePersonas, weatherData]);
+  }, [activePersonas, weatherData, profile?.personas]);
 
   const togglePersona = useCallback((id) => {
     setActivePersonas(prev => {

@@ -130,6 +130,12 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
     }
   };
 
+  const handleDone = () => {
+    const currentLatest = getProfile();
+    if (onProfileUpdated) onProfileUpdated(currentLatest);
+    onClose();
+  };
+
   return (
     <div style={{
       position: 'fixed',
@@ -145,7 +151,7 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
       <div className="settings-modal-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Settings & Preferences</h3>
-          <button onClick={onClose} className="tap-target" style={{ width: '32px', height: '32px' }}>
+          <button onClick={handleDone} className="tap-target" style={{ width: '32px', height: '32px' }}>
             <Icons.X size={20} />
           </button>
         </div>
@@ -432,7 +438,7 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
           </button>
 
           <button
-            onClick={onClose}
+            onClick={handleDone}
             className="feedback-btn"
             style={{ padding: '6px 14px', fontWeight: 600 }}
           >

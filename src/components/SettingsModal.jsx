@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { LocationSearch } from './LocationSearch';
 import * as Icons from 'lucide-react';
 import { useTranslation } from 'react-i18next';

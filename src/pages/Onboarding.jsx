@@ -28,6 +28,7 @@ export function Onboarding({ onComplete }) {
   const [step, setStep] = useState(1);
   const [selectedPersonas, setSelectedPersonas] = useState(['health', 'commute']);
   const [locationId, setLocationId] = useState('noida-01');
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [healthInputs, setHealthInputs] = useState({
     respiratorySensitivity: false,

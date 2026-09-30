@@ -248,7 +248,10 @@ export class OpenWeatherProvider extends WeatherDataProvider {
     return {
       location: {
         id: location.id,
-        name: weatherJson.name || location.name,
+        // Prefer the user-selected location.name; OWM's weatherJson.name resolves
+        // by coordinate and can return broad administrative zones (e.g. "Konkan Division")
+        // instead of the specific city the user searched for.
+        name: location.name || weatherJson.name,
         state: location.state || '',
         lat: location.lat,
         lon: location.lon,

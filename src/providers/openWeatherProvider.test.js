@@ -92,4 +92,37 @@ describe('OpenWeatherProvider', () => {
     expect(fetchSpy.mock.calls.length).toBe(firstCallCount);
     expect(data2.current.temperature).toBe(data1.current.temperature);
   });
+
+  it('correctly parses real sunrise and sunset times with non-12h day length and timezone offset', async () => {
+    // Summer solstice date: UTC midnight is 1718928000 (2024-06-21 00:00:00 UTC)
+    // Desired local time in IST (+05:30 = +19800s):
+    // Sunrise 06:02 AM -> 1718928000 + (6 * 3600 + 2 * 60) - 19800
+    // Sunset 07:18 PM (19:18) -> 1718928000 + (19 * 3600 + 18 * 60) - 19800
+    // Day length: 13h16m (NOT 12h00m)
+    const baseMidnightUtc = 1718928000;
+    const tzOffset = 19800;
+    const mockWeather = {
+      name: 'Mumbai',
+      timezone: tzOffset,
+      main: { temp: 31, humidity: 75 },
+      weather: [{ main: 'Clear' }],
+      sys: {
+        sunrise: baseMidnightUtc + (6 * 3600 + 2 * 60) - tzOffset,
+        sunset: baseMidnightUtc + (19 * 3600 + 18 * 60) - tzOffset
+      }
+    };
+
+    global.fetch = vi.fn((url) => {
+      if (url.includes('/weather')) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockWeather) });
+      if (url.includes('/forecast')) return Promise.resolve({ ok: true, json: () => Promise.resolve({ list: [] }) });
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ list: [] }) });
+    });
+
+    const data = await provider.getWeatherData('mumbai-01');
+    expect(data.current.sunrise).toBe('06:02 AM');
+    expect(data.current.sunset).toBe('07:18 PM');
+    // Verify it is not a 12h offset (06:02 AM + 12h = 06:02 PM != 07:18 PM)
+    expect(data.current.sunset).not.toBe('06:02 PM');
+  });
 });
+

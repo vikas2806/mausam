@@ -167,13 +167,23 @@ export class OpenWeatherProvider extends WeatherDataProvider {
     const mainCondGroup = weatherCond.main || 'Clear';
     const condInfo = OWM_CONDITION_MAP[mainCondGroup] || { text: weatherCond.description || 'Clear Sky', code: 'sunny', icon: 'sun' };
 
-    // Format sunrise/sunset
-    const sunriseStr = sys.sunrise
-      ? new Date(sys.sunrise * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      : '06:15 AM';
-    const sunsetStr = sys.sunset
-      ? new Date(sys.sunset * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      : '06:45 PM';
+    // Format sunrise/sunset using location's timezone offset when available
+    const tzOffset = weatherJson.timezone;
+    const formatSunTime = (unixSec) => {
+      if (!unixSec) return null;
+      if (typeof tzOffset === 'number') {
+        const d = new Date((unixSec + tzOffset) * 1000);
+        const hours = d.getUTCHours();
+        const minutes = d.getUTCMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const h12 = hours % 12 || 12;
+        return `${String(h12).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${ampm}`;
+      }
+      return new Date(unixSec * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const sunriseStr = formatSunTime(sys.sunrise) || '06:15 AM';
+    const sunsetStr = formatSunTime(sys.sunset) || '06:45 PM';
 
     // Parse forecast list (3-hour slots) into hourly entries
     const list = forecastJson.list || [];

@@ -89,7 +89,7 @@ export class RealWeatherProvider extends WeatherDataProvider {
       const lat = targetLoc.lat ?? 28.61;
       const lon = targetLoc.lon ?? 77.20;
 
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_probability_max&timezone=auto`;
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,precipitation_probability_max,sunrise,sunset&timezone=auto`;
       const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,us_aqi`;
 
       const [weatherRes, aqiRes] = await Promise.all([
@@ -192,8 +192,8 @@ export class RealWeatherProvider extends WeatherDataProvider {
         uvIndex: Math.round(daily.uv_index_max?.[0] ?? 5),
         visibility: 8.5,
         pressure: Math.round(curr.surface_pressure ?? 1013),
-        sunrise: '06:15 AM',
-        sunset: '06:45 PM'
+        sunrise: daily.sunrise?.[0] ? new Date(daily.sunrise[0]).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '06:15 AM',
+        sunset: daily.sunset?.[0] ? new Date(daily.sunset[0]).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '06:45 PM'
       },
       hourly: hourlyForecast,
       daily: dailyForecast,

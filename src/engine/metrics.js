@@ -10,12 +10,12 @@
  * Candidate running windows with their UV multiplier (lower UV is better in morning/evening).
  * Score is computed from temperature, AQI, humidity, and time preference.
  */
-const RUNNING_WINDOWS = [
-  { label: '5–7 AM',   uvPenaltyFactor: 0.0, tempEstimate: -4 },  // Coolest, no UV
-  { label: '6–8 AM',   uvPenaltyFactor: 0.1, tempEstimate: -3 },
-  { label: '7–9 AM',   uvPenaltyFactor: 0.3, tempEstimate: -2 },
-  { label: '18–20 PM', uvPenaltyFactor: 0.2, tempEstimate: +1 },   // Post-peak heat
-  { label: '19–21 PM', uvPenaltyFactor: 0.0, tempEstimate: +0 },   // UV near zero
+export const RUNNING_WINDOWS = [
+  { label: '5–7 AM',   startHour: 5,  endHour: 7,  uvPenaltyFactor: 0.0, tempEstimate: -4 },  // Coolest, no UV
+  { label: '6–8 AM',   startHour: 6,  endHour: 8,  uvPenaltyFactor: 0.1, tempEstimate: -3 },
+  { label: '7–9 AM',   startHour: 7,  endHour: 9,  uvPenaltyFactor: 0.3, tempEstimate: -2 },
+  { label: '18–20 PM', startHour: 18, endHour: 20, uvPenaltyFactor: 0.2, tempEstimate: +1 }, // Post-peak heat
+  { label: '19–21 PM', startHour: 19, endHour: 21, uvPenaltyFactor: 0.0, tempEstimate: +0 }, // UV near zero
 ];
 
 /**
@@ -54,21 +54,56 @@ export const RUNNING_SCORE_THRESHOLDS = {
 
 /**
  * Determine the best 2-hour running window given current weather data.
+ * Only considers upcoming time windows relative to `now` (device/server clock).
  *
  * @param {import('../data/types').NormalizedWeatherData} weatherData
- * @returns {{ window: string, score: number, tip: string, displayLabel?: string }}
+ * @param {Date|number} [now=new Date()]
+ * @returns {{ window: string, score: number, tip: string, rawWindow?: string }}
  */
-export function bestRunningHours(weatherData) {
+export function bestRunningHours(weatherData, now = new Date()) {
   const { current, airQuality } = weatherData;
   const temp     = current?.temperature ?? 25;
   const aqi      = airQuality?.aqi ?? 0;
   const humidity = current?.humidity ?? 50;
   const uv       = current?.uvIndex ?? 0;
 
-  let bestWindow = RUNNING_WINDOWS[0];
+  // Determine current fractional hour
+  let currentHour = 0;
+  if (typeof now === 'number') {
+    currentHour = now;
+  } else if (now instanceof Date && !isNaN(now.getTime())) {
+    currentHour = now.getHours() + now.getMinutes() / 60;
+  }
+
+  // Filter windows that are still upcoming (window has not already ended)
+  const upcomingWindows = RUNNING_WINDOWS.filter(w => w.endHour > currentHour);
+
+  // Identify limiting factors from computed metrics
+  const limitingFactors = [];
+  if (temp > 28) limitingFactors.push(`high temperature (${temp}°C)`);
+  if (humidity > 70) limitingFactors.push(`high humidity (${humidity}%)`);
+  if (current?.windSpeed > 30) limitingFactors.push(`strong wind (${current.windSpeed} km/h)`);
+  if (airQuality && aqi > 100) limitingFactors.push(`poor air quality (${aqi} AQI)`);
+
+  const factorMsg = limitingFactors.length > 0 ? ` driven by ${limitingFactors.join(' and ')}` : ' due to overall warm conditions';
+  const tomorrowMorningWindow = RUNNING_WINDOWS[0].label;
+
+  // Case 1: No upcoming windows remain today (e.g. night / past 21:00)
+  if (upcomingWindows.length === 0) {
+    const morningScore = Math.round(scoreRunningWindow(RUNNING_WINDOWS[0], temp, aqi, humidity, uv));
+    return {
+      window: `Tomorrow ${tomorrowMorningWindow}`,
+      rawWindow: `Tomorrow ${tomorrowMorningWindow}`,
+      score: morningScore,
+      tip: `No good windows remain today — next good window: tomorrow ${tomorrowMorningWindow}.`
+    };
+  }
+
+  // Case 2: Evaluate upcoming windows
+  let bestWindow = upcomingWindows[0];
   let bestScore  = -1;
 
-  for (const window of RUNNING_WINDOWS) {
+  for (const window of upcomingWindows) {
     const score = scoreRunningWindow(window, temp, aqi, humidity, uv);
     if (score > bestScore) {
       bestScore  = score;
@@ -77,26 +112,18 @@ export function bestRunningHours(weatherData) {
   }
 
   const score = Math.round(bestScore);
-  
-  // Identify actual limiting factors from computed metrics
-  const limitingFactors = [];
-  if (temp > 28) limitingFactors.push(`high temperature (${temp}°C)`);
-  if (humidity > 70) limitingFactors.push(`high humidity (${humidity}%)`);
-  if (current?.windSpeed > 30) limitingFactors.push(`strong wind (${current.windSpeed} km/h)`);
-  if (airQuality && aqi > 100) limitingFactors.push(`poor air quality (${aqi} AQI)`);
-
   let tip;
   let displayLabel = bestWindow.label;
 
   if (score >= RUNNING_SCORE_THRESHOLDS.EXCELLENT) {
     tip = `${bestWindow.label} is ideal today — pleasant temperature (${temp}°C) and comfortable conditions.`;
   } else if (score >= RUNNING_SCORE_THRESHOLDS.ACCEPTABLE) {
-    const factorMsg = limitingFactors.length > 0 ? ` due to ${limitingFactors.join(' and ')}` : '';
-    tip = `${bestWindow.label} is your best option${factorMsg}. Stay hydrated during your run.`;
+    const reason = limitingFactors.length > 0 ? ` due to ${limitingFactors.join(' and ')}` : '';
+    tip = `${bestWindow.label} is your best option today${reason}. Stay hydrated during your run.`;
   } else {
+    // All remaining windows today are poor
     displayLabel = `Least-bad: ${bestWindow.label}`;
-    const factorMsg = limitingFactors.length > 0 ? ` driven by ${limitingFactors.join(' and ')}` : ' due to overall warm conditions';
-    tip = `Least-bad window: ${bestWindow.label} (conditions remain poor${factorMsg}). Consider indoor workouts instead.`;
+    tip = `No good windows remain today — conditions remain poor (least-bad: ${bestWindow.label}${factorMsg}). Next good window: tomorrow ${tomorrowMorningWindow}. Consider indoor workouts instead.`;
   }
 
   return { window: displayLabel, rawWindow: bestWindow.label, score, tip };

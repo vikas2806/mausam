@@ -1,5 +1,7 @@
 import { WeatherDataProvider } from '../data/WeatherDataProvider';
 import { MockWeatherProvider } from '../data/MockWeatherProvider';
+import { RealWeatherProvider } from '../data/RealWeatherProvider';
+import { KNOWN_LOCATIONS, findLocationById } from '../utils/profileStorage';
 
 /**
  * Weather condition mapping for OpenWeatherMap icon/weather codes.
@@ -45,6 +47,7 @@ export class OpenWeatherProvider extends WeatherDataProvider {
     super();
     this.apiKey = apiKey;
     this.mockFallback = new MockWeatherProvider();
+    this.realFallback = new RealWeatherProvider();
     this._inMemoryCache = new Map();
   }
 
@@ -102,30 +105,34 @@ export class OpenWeatherProvider extends WeatherDataProvider {
   async getWeatherData(locationParam) {
     const key = this.apiKey || getApiKey();
     const locObj = typeof locationParam === 'object' && locationParam !== null ? locationParam : null;
-    const locationId = locObj ? locObj.id : (locationParam || 'noida-01');
+    const locationId = locObj ? locObj.id : (locationParam || 'mumbai-01');
 
     if (!key) {
       console.warn('[OpenWeatherProvider] No API key found. Falling back to MockWeatherProvider.');
       return this.mockFallback.getWeatherData(locationParam);
     }
 
-    const cacheKey = `${CACHE_PREFIX}${locationId}`;
+    // Resolve lat/lon from location object, known location table, or defaults
+    let targetLoc = locObj;
+    if (!targetLoc || typeof targetLoc.lat !== 'number' || typeof targetLoc.lon !== 'number') {
+      targetLoc = findLocationById(locationId) || KNOWN_LOCATIONS.find(l => l.id === locationId) || {
+        id: locationId,
+        name: locObj?.name || (typeof locationParam === 'string' ? locationParam : 'Mumbai'),
+        lat: 19.0760,
+        lon: 72.8777
+      };
+    }
+
+    const lat = targetLoc.lat ?? 19.0760;
+    const lon = targetLoc.lon ?? 72.8777;
+
+    const cacheKey = `${CACHE_PREFIX}${lat.toFixed(2)}_${lon.toFixed(2)}`;
     const cached = this._getCachedData(cacheKey);
     if (cached) {
-      console.log('[OpenWeatherProvider] Serving cached data for:', locationId, cached);
+      console.log('[OpenWeatherProvider] Serving cached data for:', targetLoc.name, cached);
       return cached;
     }
-    console.log('[OpenWeatherProvider] Cache miss. Fetching live OpenWeatherMap API data for:', locationId);
-
-    // Resolve lat/lon from location object, mock location table, or defaults
-    let targetLoc = locObj;
-    if (!targetLoc) {
-      const mockLocations = await this.mockFallback.searchLocations('');
-      targetLoc = mockLocations.find(l => l.id === locationId) || { id: locationId, name: locationId, lat: 28.61, lon: 77.20 };
-    }
-
-    const lat = targetLoc.lat ?? 28.61;
-    const lon = targetLoc.lon ?? 77.20;
+    console.log('[OpenWeatherProvider] Fetching live OpenWeatherMap API data for:', targetLoc.name, `(${lat}, ${lon})`);
 
     const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${key}`;
     const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${key}`;
@@ -150,8 +157,8 @@ export class OpenWeatherProvider extends WeatherDataProvider {
       this._setCachedData(cacheKey, normalized);
       return normalized;
     } catch (err) {
-      console.warn(`[OpenWeatherProvider] Fetch failed (${err.message}). Falling back to MockWeatherProvider.`);
-      return this.mockFallback.getWeatherData(locationId);
+      console.warn(`[OpenWeatherProvider] OWM fetch failed (${err.message}). Falling back to live Open-Meteo API.`);
+      return this.realFallback.getWeatherData(targetLoc);
     }
   }
 
@@ -317,11 +324,11 @@ export class OpenWeatherProvider extends WeatherDataProvider {
    */
   async searchLocations(query) {
     if (!query || query.trim().length === 0) {
-      return this.mockFallback.searchLocations(query);
+      return this.realFallback.searchLocations(query);
     }
     const key = this.apiKey || getApiKey();
     if (!key) {
-      return this.mockFallback.searchLocations(query);
+      return this.realFallback.searchLocations(query);
     }
 
     try {
@@ -331,7 +338,7 @@ export class OpenWeatherProvider extends WeatherDataProvider {
 
       const results = await res.json();
       if (!Array.isArray(results) || results.length === 0) {
-        return this.mockFallback.searchLocations(query);
+        return this.realFallback.searchLocations(query);
       }
 
       return results.map((r, idx) => ({
@@ -344,7 +351,7 @@ export class OpenWeatherProvider extends WeatherDataProvider {
         isAgriRegion: false
       }));
     } catch {
-      return this.mockFallback.searchLocations(query);
+      return this.realFallback.searchLocations(query);
     }
   }
 }

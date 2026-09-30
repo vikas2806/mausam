@@ -2,19 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { LocationSearch } from './LocationSearch';
 import * as Icons from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { getProfile, saveProfile, resetProfile, getCustomPersonas, saveCustomPersona, deleteCustomPersona } from '../utils/profileStorage';
+import { getProfile, saveProfile, resetProfile, getCustomPersonas, saveCustomPersona, deleteCustomPersona, KNOWN_LOCATIONS } from '../utils/profileStorage';
 import { matchPersonasByQuery } from '../utils/personaMatcher';
 import PERSONAS from '../config/personas.json';
 import CARD_CONFIG from '../config/cardConfig.json';
-
-const LOCATIONS = [
-  { id: 'noida-01', name: 'Sector 2, Noida' },
-  { id: 'mumbai-01', name: 'Marine Drive, Mumbai' },
-  { id: 'chennai-01', name: 'Marina Beach, Chennai' },
-  { id: 'shimla-01', name: 'Mall Road, Shimla' },
-  { id: 'goa-01', name: 'Calangute, Goa' },
-  { id: 'ludhiana-01', name: 'Ludhiana Agromet Belt' }
-];
 
 const ALL_CARD_IDS = Object.keys(CARD_CONFIG.cardDataRequirements);
 const DEFAULT_CUSTOM_WEIGHT = 20;
@@ -169,6 +160,35 @@ export function SettingsModal({ onClose, onProfileUpdated }) {
               if (onProfileUpdated) onProfileUpdated(nextProfile);
             }}
           />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+            {KNOWN_LOCATIONS.slice(0, 6).map((loc) => {
+              const isSelected = profile.location?.id === loc.id || profile.locationId === loc.id;
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onClick={() => {
+                    const nextProfile = saveProfile({ locationId: loc.id, location: loc });
+                    setProfileState(nextProfile);
+                    if (onProfileUpdated) onProfileUpdated(nextProfile);
+                  }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '16px',
+                    border: '1px solid',
+                    borderColor: isSelected ? '#38bdf8' : 'rgba(255,255,255,0.2)',
+                    background: isSelected ? 'rgba(56,189,248,0.25)' : 'rgba(255,255,255,0.06)',
+                    color: isSelected ? '#38bdf8' : '#fff',
+                    fontSize: '0.75rem',
+                    fontWeight: isSelected ? 600 : 400,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {loc.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Active Personas — loops over personas.json + custom, no hardcoded list */}

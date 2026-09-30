@@ -21,12 +21,6 @@ export const EXPANDED_MOCK_LOCATIONS = [
   { id: 'bhubaneswar-01', name: 'Bhubaneswar', state: 'Odisha', country: 'IN', lat: 20.29, lon: 85.82, isCoastal: true, isAgriRegion: false }
 ];
 
-/**
- * Search locations using OpenWeatherMap Geocoding API or fallback mock list.
- * @param {string} query
- * @param {string} [apiKey]
- * @returns {Promise<Array<{id: string, name: string, state: string, country: string, lat: number, lon: number, displayName: string}>>}
- */
 export async function searchLocations(query, apiKey = getApiKey()) {
   const trimmed = (query || '').trim();
   if (!trimmed) return [];
@@ -53,33 +47,42 @@ export async function searchLocations(query, apiKey = getApiKey()) {
   const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(trimmed)}&limit=5&appid=${apiKey}`;
   try {
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`Geocoding API error ${res.status}`);
-    const data = await res.json();
-    return data.map((item, idx) => ({
-      id: `geo-${item.lat.toFixed(2)}-${item.lon.toFixed(2)}-${idx}`,
-      name: item.name,
-      state: item.state || '',
-      country: item.country || '',
-      lat: item.lat,
-      lon: item.lon,
-      displayName: `${item.name}${item.state ? ', ' + item.state : ''}${item.country ? ', ' + item.country : ''}`
-    }));
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map((item, idx) => {
+          const parts = [item.name, item.state, item.country].filter(Boolean);
+          return {
+            id: `owm-${item.lat.toFixed(4)}-${item.lon.toFixed(4)}-${idx}`,
+            name: item.name,
+            state: item.state || '',
+            country: item.country || '',
+            lat: item.lat,
+            lon: item.lon,
+            displayName: parts.join(', ')
+          };
+        });
+      }
+    }
   } catch (err) {
-    console.warn(`[geocodingProvider] Direct search failed (${err.message}). Falling back to mock locations.`);
-    const qLower = trimmed.toLowerCase();
-    return EXPANDED_MOCK_LOCATIONS.filter(l =>
-      l.name.toLowerCase().includes(qLower) ||
-      l.state.toLowerCase().includes(qLower)
-    ).map(l => ({
-      id: l.id,
-      name: l.name,
-      state: l.state,
-      country: l.country,
-      lat: l.lat,
-      lon: l.lon,
-      displayName: `${l.name}${l.state ? ', ' + l.state : ''}, ${l.country}`
-    }));
+    console.warn(`[geocodingProvider] OWM geocode failed (${err.message}).`);
   }
+
+  // Fallback to known locations list matching query
+  const qLower = trimmed.toLowerCase();
+  return EXPANDED_MOCK_LOCATIONS.filter(l =>
+    l.name.toLowerCase().includes(qLower) ||
+    l.state.toLowerCase().includes(qLower) ||
+    l.id.toLowerCase().includes(qLower)
+  ).map(l => ({
+    id: l.id,
+    name: l.name,
+    state: l.state,
+    country: l.country,
+    lat: l.lat,
+    lon: l.lon,
+    displayName: `${l.name}${l.state ? ', ' + l.state : ''}, ${l.country}`
+  }));
 }
 
 /**

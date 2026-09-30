@@ -25,11 +25,16 @@ export default function App() {
     setLoading(true);
     const provider = getWeatherProvider();
     const locParam = profile.location || profile.locationId;
-    provider.getWeatherData(locParam).then(data => {
-      setWeatherData(data);
-      setLoading(false);
-    });
-  }, [profile.location, profile.locationId, completedOnboarding]);
+    provider.getWeatherData(locParam)
+      .then(data => {
+        setWeatherData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('[App] Failed to fetch weather data:', err);
+        setLoading(false);
+      });
+  }, [profile.location?.id, profile.location?.lat, profile.location?.lon, profile.locationId, completedOnboarding]);
 
   const handleOnboardingComplete = () => {
     setProfile(getProfile());

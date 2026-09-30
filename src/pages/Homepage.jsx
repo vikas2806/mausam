@@ -75,14 +75,14 @@ export function Homepage({ weatherData, profile, onOpenSettings }) {
       {/* ── HEADER ─────────────────────────────────────────────────────── */}
       <header className="homepage-header">
         <div className="header-top-row">
-          <button className="header-icon-btn" aria-label="Menu">
+          <button className="header-icon-btn" aria-label="Menu" onClick={onOpenSettings}>
             <Menu size={20} />
           </button>
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: 'center', cursor: 'pointer' }} onClick={onOpenSettings} title="Click to change location">
             <div className="header-location">{location.name}</div>
             <div className="header-date">{dateStr}</div>
           </div>
-          <button className="header-icon-btn" aria-label="Search">
+          <button className="header-icon-btn" aria-label="Search" onClick={onOpenSettings} title="Search location">
             <Search size={20} />
           </button>
         </div>

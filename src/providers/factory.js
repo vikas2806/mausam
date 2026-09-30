@@ -1,25 +1,19 @@
 import { MockWeatherProvider } from '../data/MockWeatherProvider';
 import { RealWeatherProvider } from '../data/RealWeatherProvider';
-import { OpenWeatherProvider, getApiKey } from './openWeatherProvider';
+import { OpenWeatherProvider } from './openWeatherProvider';
 
 /**
- * Determine if real weather data should be used based on env variables.
+ * Determine if mock data is explicitly enabled.
  */
-function shouldStoreUseReal() {
+function isMockExplicitlyEnabled() {
   if (typeof import.meta !== 'undefined' && import.meta.env) {
-    if (import.meta.env.VITE_USE_REAL_WEATHER !== undefined) {
-      return import.meta.env.VITE_USE_REAL_WEATHER === 'true' || import.meta.env.VITE_USE_REAL_WEATHER === true;
-    }
     if (import.meta.env.VITE_ENABLE_MOCK_DATA !== undefined) {
-      return import.meta.env.VITE_ENABLE_MOCK_DATA === 'false' || import.meta.env.VITE_ENABLE_MOCK_DATA === false;
+      return import.meta.env.VITE_ENABLE_MOCK_DATA === 'true' || import.meta.env.VITE_ENABLE_MOCK_DATA === true;
     }
   }
   if (typeof process !== 'undefined' && process.env) {
-    if (process.env.VITE_USE_REAL_WEATHER !== undefined) {
-      return process.env.VITE_USE_REAL_WEATHER === 'true' || process.env.VITE_USE_REAL_WEATHER === true;
-    }
     if (process.env.VITE_ENABLE_MOCK_DATA !== undefined) {
-      return process.env.VITE_ENABLE_MOCK_DATA === 'false' || process.env.VITE_ENABLE_MOCK_DATA === false;
+      return process.env.VITE_ENABLE_MOCK_DATA === 'true' || process.env.VITE_ENABLE_MOCK_DATA === true;
     }
   }
   return false;
@@ -40,8 +34,7 @@ function getEnvProviderName() {
 
 /**
  * Weather Provider Factory function.
- * Switches dynamically between Mock, Open-Meteo, and OpenWeatherMap providers
- * based on environment variables or explicit parameters.
+ * Returns real live API providers (OpenWeatherMap / Open-Meteo) by default.
  *
  * @param {boolean|string} [option] - true/false or provider name ('openweather', 'open-meteo', 'mock')
  * @returns {import('../data/WeatherDataProvider').WeatherDataProvider}
@@ -57,10 +50,8 @@ export function getWeatherProvider(option) {
     return new OpenWeatherProvider();
   }
 
-  // Handle boolean flag or default env fallback
-  const useReal = (typeof option === 'boolean') ? option : shouldStoreUseReal();
-
-  if (!useReal) {
+  // If mock is explicitly requested via option=false or env
+  if (option === false || isMockExplicitlyEnabled()) {
     return new MockWeatherProvider();
   }
 
@@ -69,6 +60,6 @@ export function getWeatherProvider(option) {
     return new RealWeatherProvider();
   }
 
-  // Default real provider is OpenWeatherProvider if API key or default openweather
+  // Default to real live OpenWeatherProvider (with automatic Open-Meteo live API fallback)
   return new OpenWeatherProvider();
 }

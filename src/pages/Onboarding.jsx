@@ -2,20 +2,11 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Icons from 'lucide-react';
 import { LocationSearch } from '../components/LocationSearch';
-import { saveProfile, setOnboardingCompleted, DEFAULT_LOCATION } from '../utils/profileStorage';
+import { saveProfile, setOnboardingCompleted, DEFAULT_LOCATION, KNOWN_LOCATIONS, findLocationById } from '../utils/profileStorage';
 import PERSONAS from '../config/personas.json';
 import CARD_CONFIG from '../config/cardConfig.json';
 
 import { matchPersonasByQuery } from '../utils/personaMatcher';
-
-const MOCK_LOCATIONS = [
-  { id: 'noida-01', name: 'Sector 2, Noida (Delhi NCR)' },
-  { id: 'mumbai-01', name: 'Marine Drive, Mumbai' },
-  { id: 'chennai-01', name: 'Marina Beach, Chennai' },
-  { id: 'shimla-01', name: 'Mall Road, Shimla' },
-  { id: 'goa-01', name: 'Calangute, Goa' },
-  { id: 'ludhiana-01', name: 'Ludhiana Agricultural District, Punjab' }
-];
 
 // All card IDs known to the system (from cardDataRequirements keys)
 const ALL_CARD_IDS = Object.keys(CARD_CONFIG.cardDataRequirements);
@@ -27,8 +18,8 @@ export function Onboarding({ onComplete }) {
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [selectedPersonas, setSelectedPersonas] = useState(['health', 'commute']);
-  const [locationId, setLocationId] = useState('noida-01');
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [locationId, setLocationId] = useState('mumbai-01');
+  const [selectedLocation, setSelectedLocation] = useState(DEFAULT_LOCATION);
   const [searchQuery, setSearchQuery] = useState('');
   const [healthInputs, setHealthInputs] = useState({
     respiratorySensitivity: false,

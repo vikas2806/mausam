@@ -95,20 +95,29 @@ export async function reverseGeocode(lat, lon, apiKey = getApiKey()) {
 
   if (!useMock) {
     try {
-      const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`;
+      // Request 3 candidates so we can pick the most specific (city-level) result.
+      // OWM /geo/1.0/reverse with limit=1 can return broad administrative zones
+      // (e.g. "Konkan Division") for coordinates outside recognised city boundaries.
+      const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=3&appid=${apiKey}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Reverse geocode API error ${res.status}`);
       const data = await res.json();
       if (data && data.length > 0) {
-        const item = data[0];
+        // Prefer a result whose name differs from its state — administrative division
+        // names often equal the region name (e.g. name="Konkan Division",
+        // state="Maharashtra"), whereas city-level results do not.
+        const cityLevel = data.find(item => item.name && item.state && item.name !== item.state);
+        const item = cityLevel || data[0];
+        // Prefer the English local name when available (OWM provides it under local_names.en)
+        const resolvedName = item.local_names?.en || item.name;
         return {
           id: `rev-${lat.toFixed(4)}-${lon.toFixed(4)}`,
-          name: item.name,
+          name: resolvedName,
           state: item.state || '',
           country: item.country || '',
           lat,
           lon,
-          displayName: `${item.name}${item.state ? ', ' + item.state : ''}${item.country ? ', ' + item.country : ''}`,
+          displayName: `${resolvedName}${item.state ? ', ' + item.state : ''}${item.country ? ', ' + item.country : ''}`,
         };
       }
     } catch (err) {
@@ -116,20 +125,41 @@ export async function reverseGeocode(lat, lon, apiKey = getApiKey()) {
     }
   }
 
-  // Fallback: find nearest city in mock list by straight-line distance
-  let nearest = EXPANDED_MOCK_LOCATIONS[0];
+  // Fallback: find nearest city in mock list by straight-line distance.
+  // Only substitute if the nearest mock city is within ~0.9 degrees (~100 km).
+  // Beyond that threshold, return an honest coordinate-based name rather than
+  // silently showing a city that could be 300-400 km away.
+  const NEARBY_THRESHOLD_DEG = 0.9; // ≈ 100 km
+  let nearest = null;
   let minDist = Infinity;
   for (const loc of EXPANDED_MOCK_LOCATIONS) {
     const dist = Math.sqrt((loc.lat - lat) ** 2 + (loc.lon - lon) ** 2);
     if (dist < minDist) { minDist = dist; nearest = loc; }
   }
+
+  if (nearest && minDist <= NEARBY_THRESHOLD_DEG) {
+    return {
+      id: nearest.id,
+      name: nearest.name,
+      state: nearest.state,
+      country: nearest.country,
+      lat: nearest.lat,
+      lon: nearest.lon,
+      displayName: `${nearest.name}${nearest.state ? ', ' + nearest.state : ''}, ${nearest.country}`,
+    };
+  }
+
+  // No nearby mock city — return an honest coordinate-based location.
+  // The user can then manually search for a nearby city.
+  const coordId = `coord-${lat.toFixed(4)}-${lon.toFixed(4)}`;
+  const coordName = `Location (${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E)`;
   return {
-    id: nearest.id,
-    name: nearest.name,
-    state: nearest.state,
-    country: nearest.country,
-    lat: nearest.lat,
-    lon: nearest.lon,
-    displayName: `${nearest.name}${nearest.state ? ', ' + nearest.state : ''}, ${nearest.country}`,
+    id: coordId,
+    name: coordName,
+    state: '',
+    country: '',
+    lat,
+    lon,
+    displayName: coordName,
   };
 }

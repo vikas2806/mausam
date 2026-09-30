@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { searchLocations, EXPANDED_MOCK_LOCATIONS } from './geocodingProvider';
+import { searchLocations, reverseGeocode, EXPANDED_MOCK_LOCATIONS } from './geocodingProvider';
 
 describe('geocodingProvider', () => {
   beforeEach(() => {
@@ -47,4 +47,62 @@ describe('geocodingProvider', () => {
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].name).toBe('Guwahati');
   });
+
+  // ── reverseGeocode tests ───────────────────────────────────────────────────
+
+  it('reverseGeocode: prefers city-level name over administrative division name', async () => {
+    // First result is an admin zone (name === state), second is a proper city
+    const mockData = [
+      { name: 'Konkan Division', state: 'Konkan Division', country: 'IN' },
+      { name: 'Ratnagiri', state: 'Maharashtra', country: 'IN' },
+    ];
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve(mockData) })
+    );
+
+    const result = await reverseGeocode(16.99, 73.30, 'valid-test-key');
+    expect(result.name).toBe('Ratnagiri');
+    expect(result.displayName).toContain('Ratnagiri');
+  });
+
+  it('reverseGeocode: uses local_names.en when available', async () => {
+    const mockData = [
+      {
+        name: 'Mumbā',
+        local_names: { en: 'Mumbai' },
+        state: 'Maharashtra',
+        country: 'IN',
+      },
+    ];
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve(mockData) })
+    );
+
+    const result = await reverseGeocode(18.94, 72.82, 'valid-test-key');
+    expect(result.name).toBe('Mumbai');
+  });
+
+  it('reverseGeocode: requests limit=3 from the API', async () => {
+    global.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve([{ name: 'TestCity', state: 'State', country: 'IN' }]) })
+    );
+    await reverseGeocode(28.58, 77.31, 'valid-test-key');
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('limit=3'));
+  });
+
+  it('reverseGeocode: uses nearest mock city when within ~100km (no API key)', async () => {
+    // Noida mock is at 28.58, 77.31 — passing exact same coords should match it
+    const result = await reverseGeocode(28.58, 77.31, '');
+    expect(result.name).toBe('Noida');
+  });
+
+  it('reverseGeocode: returns coordinate-based name when no mock city is within ~100km', async () => {
+    // Middle of the Indian Ocean — far from every mock city
+    const result = await reverseGeocode(10.00, 65.00, '');
+    expect(result.name).toMatch(/Location/);
+    expect(result.name).toContain('°N');
+    // Must NOT silently return a named Indian city
+    expect(['Mumbai', 'Noida', 'Chennai', 'Kochi']).not.toContain(result.name);
+  });
 });
+

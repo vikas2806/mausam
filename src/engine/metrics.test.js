@@ -81,6 +81,45 @@ describe('bestRunningHours', () => {
     const result = bestRunningHours(hotHumidWeather);
     expect(result.tip).toMatch(/poor|not perfect|unhealthy|best option/i);
   });
+
+  it('does NOT recommend morning windows that have already passed at 10:58 AM', () => {
+    // At 10:58 AM, morning windows (5-7 AM, 6-8 AM, 7-9 AM) are in the past
+    const mockTime = new Date('2026-09-30T10:58:00');
+    const result = bestRunningHours(goodWeather, mockTime);
+
+    // Must NOT recommend 5–7 AM, 6–8 AM, or 7–9 AM
+    expect(result.window).not.toBe('5–7 AM');
+    expect(result.window).not.toBe('6–8 AM');
+    expect(result.window).not.toBe('7–9 AM');
+    // Must recommend upcoming evening window (18–20 PM or 19–21 PM)
+    expect(['18–20 PM', '19–21 PM']).toContain(result.window);
+  });
+
+  it('does NOT recommend 5-7 AM window when current time is 7:30 AM', () => {
+    const mockTime = new Date('2026-09-30T07:30:00');
+    const result = bestRunningHours(goodWeather, mockTime);
+
+    expect(result.window).not.toBe('5–7 AM');
+    expect(['7–9 AM', '18–20 PM', '19–21 PM']).toContain(result.window);
+  });
+
+  it('recommends tomorrow morning when all windows today have passed (e.g. 21:30 PM)', () => {
+    const mockTime = new Date('2026-09-30T21:30:00');
+    const result = bestRunningHours(goodWeather, mockTime);
+
+    expect(result.window).toBe('Tomorrow 5–7 AM');
+    expect(result.tip).toMatch(/tomorrow 5–7 AM/i);
+  });
+
+  it('does NOT show passed morning window under poor conditions at 10:58 AM', () => {
+    const mockTime = new Date('2026-09-30T10:58:00');
+    const result = bestRunningHours(hotHumidWeather, mockTime);
+
+    // Must not show Least-bad: 5–7 AM
+    expect(result.window).not.toMatch(/5–7 AM|6–8 AM|7–9 AM/);
+    expect(result.window).toMatch(/Least-bad: (18–20 PM|19–21 PM)/);
+    expect(result.tip).toMatch(/tomorrow 5–7 AM/i);
+  });
 });
 
 // ── comfortIndex ─────────────────────────────────────────────────────────────
